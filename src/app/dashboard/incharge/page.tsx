@@ -9,22 +9,39 @@ export default function InchargeDashboard() {
     const router = useRouter();
 
     const [stats, setStats] = useState({
-        totalDepartments: 0,
-        totalItems: 0,
-        pendingRequests: 0,
-        activeIssues: 0
+        pendingApprovals: 0,
+        readyForIssuance: 0,
+        currentlyIssued: 0,
+        overdueCount: 0
     });
-
-    // Redirect if not incharge
-    if (status === 'authenticated' && session?.user?.role !== 'INCHARGE') {
-        router.push('/dashboard');
-        return null;
-    }
+    const [loadingStats, setLoadingStats] = useState(true);
 
     useEffect(() => {
-        // Fetch stats for incharge user
-        // TODO: Implement API call when item management is ready
-    }, []);
+        if (status === 'authenticated' && session?.user?.role === 'INCHARGE') {
+            fetchStats();
+        }
+    }, [status, session]);
+
+    const fetchStats = async () => {
+        try {
+            const response = await fetch('/api/incharge/stats');
+            if (response.ok) {
+                const data = await response.json();
+                setStats(data);
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
+
+    // Redirect if not incharge (AFTER all hooks)
+    useEffect(() => {
+        if (status === 'authenticated' && session?.user?.role !== 'INCHARGE') {
+            router.push('/dashboard');
+        }
+    }, [status, session, router]);
 
     if (status === 'loading') {
         return (
@@ -86,58 +103,62 @@ export default function InchargeDashboard() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    {/* Pending Approvals */}
                     <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
-                        <div className="flex items-center">
-                            <div className="p-3 bg-purple-100 rounded-lg">
-                                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-secondary-600">Pending Approvals</p>
+                                <p className="text-3xl font-bold text-secondary-800 mt-1">{stats.pendingApprovals}</p>
                             </div>
-                            <div className="ml-4">
-                                <p className="text-sm text-secondary-600">My Departments</p>
-                                <p className="text-2xl font-bold text-secondary-800">{stats.totalDepartments}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
-                        <div className="flex items-center">
-                            <div className="p-3 bg-green-100 rounded-lg">
-                                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                </svg>
-                            </div>
-                            <div className="ml-4">
-                                <p className="text-sm text-secondary-600">Total Items</p>
-                                <p className="text-2xl font-bold text-secondary-800">{stats.totalItems}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
-                        <div className="flex items-center">
-                            <div className="p-3 bg-yellow-100 rounded-lg">
+                            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                                 <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
-                            <div className="ml-4">
-                                <p className="text-sm text-secondary-600">Pending Requests</p>
-                                <p className="text-2xl font-bold text-secondary-800">{stats.pendingRequests}</p>
-                            </div>
                         </div>
                     </div>
 
+                    {/* Ready for Issuance */}
                     <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
-                        <div className="flex items-center">
-                            <div className="p-3 bg-blue-100 rounded-lg">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-secondary-600">Ready for Issuance</p>
+                                <p className="text-3xl font-bold text-secondary-800 mt-1">{stats.readyForIssuance}</p>
+                            </div>
+                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                 </svg>
                             </div>
-                            <div className="ml-4">
-                                <p className="text-sm text-secondary-600">Active Issues</p>
-                                <p className="text-2xl font-bold text-secondary-800">{stats.activeIssues}</p>
+                        </div>
+                    </div>
+
+                    {/* Currently Issued */}
+                    <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-secondary-600">Currently Issued</p>
+                                <p className="text-3xl font-bold text-secondary-800 mt-1">{stats.currentlyIssued}</p>
+                            </div>
+                            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Overdue Items */}
+                    <div className="bg-white rounded-xl shadow-md p-6 border border-red-200">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-secondary-600">Overdue Items</p>
+                                <p className="text-3xl font-bold text-red-600 mt-1">{stats.overdueCount}</p>
+                            </div>
+                            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
                             </div>
                         </div>
                     </div>

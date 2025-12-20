@@ -293,3 +293,186 @@ export async function sendPasswordResetEmail(email: string, userName: string, re
     html: template.html
   });
 }
+
+/**
+ * Email template for overdue item notification
+ */
+export function overdueItemEmailTemplate(data: {
+  userName: string;
+  itemName: string;
+  itemId: string;
+  dueDate: string;
+  daysOverdue: number;
+}) {
+  return {
+    subject: `OVERDUE: ${data.itemName} - Action Required`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #dc3545; color: white; padding: 20px; text-align: center; }
+          .content { background: #f9f9f9; padding: 20px; margin: 20px 0; }
+          .alert { background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 15px 0; color: #721c24; }
+          .footer { text-align: center; color: #777; font-size: 12px; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>⚠️ OVERDUE ITEM</h2>
+          </div>
+          <div class="content">
+            <p>Dear ${data.userName},</p>
+            <p>The following item is <strong>${data.daysOverdue} day(s) overdue</strong>:</p>
+            
+            <div class="alert">
+              <strong>${data.itemName}</strong> (ID: ${data.itemId})<br>
+              Due Date: <strong>${data.dueDate}</strong><br>
+              Days Overdue: <strong>${data.daysOverdue}</strong>
+            </div>
+            
+            <p><strong style="color: #dc3545;">IMPORTANT WARNING:</strong></p>
+            <p>You will receive a <strong>6-month ban</strong> from borrowing any items when this item is returned late.</p>
+            <p>Please return the item immediately to the respective lab.</p>
+          </div>
+          <div class="footer">
+            <p>This is an automated message from the Inventory Management System</p>
+            <p>Robotics Lab, AI Research Centre, Woxsen University</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+}
+
+/**
+ * Email template for late return ban notification
+ */
+export function lateReturnBanEmailTemplate(data: {
+  userName: string;
+  itemName: string;
+  itemId: string;
+  daysLate: number;
+  bannedUntil: string;
+}) {
+  return {
+    subject: `Account Suspended - Late Return of ${data.itemName}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #721c24; color: white; padding: 20px; text-align: center; }
+          .content { background: #f9f9f9; padding: 20px; margin: 20px 0; }
+          .ban-notice { background: #f8d7da; border: 2px solid #dc3545; padding: 20px; margin: 15px 0; text-align: center; }
+          .footer { text-align: center; color: #777; font-size: 12px; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>🚫 ACCOUNT SUSPENDED</h2>
+          </div>
+          <div class="content">
+            <p>Dear ${data.userName},</p>
+            <p>Your account has been suspended due to late return of equipment.</p>
+            
+            <div class="ban-notice">
+              <h3 style="color: #721c24; margin-top: 0;">6-Month Borrowing Ban</h3>
+              <p><strong>Item:</strong> ${data.itemName} (ID: ${data.itemId})</p>
+              <p><strong>Days Late:</strong> ${data.daysLate}</p>
+              <p><strong>Ban Until:</strong> ${data.bannedUntil}</p>
+            </div>
+            
+            <p>During this suspension period:</p>
+            <ul>
+              <li>You cannot submit new equipment requests</li>
+              <li>You cannot borrow any items from any lab</li>
+              <li>Your account will be automatically reactivated after the ban period</li>
+            </ul>
+            
+            <p>Please ensure timely returns in the future to avoid further penalties.</p>
+          </div>
+          <div class="footer">
+            <p>This is an automated message from the Inventory Management System</p>
+            <p>Robotics Lab, AI Research Centre, Woxsen University</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+}
+
+/**
+ * Email template for damage compensation notice
+ */
+export function damageCompensationEmailTemplate(data: {
+  userName: string;
+  itemName: string;
+  itemId: string;
+  damageRemarks: string;
+  inchargeName: string;
+  inchargeEmail: string;
+}) {
+  return {
+    subject: `URGENT: Damage Compensation Required - ${data.itemName}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #856404; color: white; padding: 20px; text-align: center; }
+          .content { background: #f9f9f9; padding: 20px; margin: 20px 0; }
+          .damage-notice { background: #fff3cd; border: 2px solid #ffc107; padding: 20px; margin: 15px 0; }
+          .footer { text-align: center; color: #777; font-size: 12px; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>⚠️ COMPENSATION REQUIRED</h2>
+          </div>
+          <div class="content">
+            <p>Dear ${data.userName},</p>
+            <p>An item you borrowed has been returned with damage and requires compensation.</p>
+            
+            <div class="damage-notice">
+              <h3 style="color: #856404; margin-top: 0;">Damage Report</h3>
+              <p><strong>Item:</strong> ${data.itemName} (ID: ${data.itemId})</p>
+              <p><strong>Damage Description:</strong></p>
+              <p>${data.damageRemarks}</p>
+            </div>
+            
+            <p><strong style="color: #dc3545;">Your account is now suspended</strong> until compensation is complete.</p>
+            
+            <p><strong>Required Action:</strong></p>
+            <ul>
+              <li>Provide a replacement for the damaged item</li>
+              <li>Or cover the repair/replacement cost</li>
+              <li>Contact the lab incharge immediately</li>
+            </ul>
+            
+            <p><strong>Contact Information:</strong></p>
+            <p>${data.inchargeName} - ${data.inchargeEmail}</p>
+            
+            <p>Your borrowing privileges will be restored only after compensation is verified by the lab incharge.</p>
+          </div>
+          <div class="footer">
+            <p>This is an automated message from the Inventory Management System</p>
+            <p>Robotics Lab, AI Research Centre, Woxsen University</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+}

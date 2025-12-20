@@ -186,6 +186,11 @@ model IssueRecord {
   damageRemarks      String?
   lateFee            Float?
   isPendingReplacement Boolean @default(false)
+  
+  // Email reminder tracking
+  reminder3DaysSent  Boolean   @default(false)
+  reminder1DaySent   Boolean   @default(false)
+  overdueSent        Boolean   @default(false)
 
   // Relations
   request    IssueRequest @relation(fields: [requestId], references: [id])

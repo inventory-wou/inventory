@@ -26,6 +26,7 @@ interface UserTableProps {
     onRoleChange: (userId: string, newRole: string) => void;
     onStatusToggle: (userId: string, isActive: boolean) => void;
     onDelete: (userId: string) => void;
+    onRevokeBan?: (userId: string) => void;
     isLoading?: boolean;
 }
 
@@ -36,6 +37,7 @@ export default function UserTable({
     onRoleChange,
     onStatusToggle,
     onDelete,
+    onRevokeBan,
     isLoading = false
 }: UserTableProps) {
     const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
@@ -197,6 +199,15 @@ export default function UserTable({
                                         )}
                                         {user.isApproved && (
                                             <>
+                                                {user.isBanned && onRevokeBan && (
+                                                    <button
+                                                        onClick={() => onRevokeBan(user.id)}
+                                                        className="text-purple-600 hover:text-purple-900 px-3 py-1 rounded hover:bg-purple-50 transition-colors font-semibold"
+                                                        title={user.bannedUntil ? `Banned until ${new Date(user.bannedUntil).toLocaleDateString()}` : 'Banned indefinitely (compensation)'}
+                                                    >
+                                                        Revoke Ban
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => onStatusToggle(user.id, !user.isActive)}
                                                     className={`${user.isActive ? 'text-orange-600 hover:text-orange-900' : 'text-green-600 hover:text-green-900'} px-3 py-1 rounded hover:bg-secondary-50 transition-colors`}

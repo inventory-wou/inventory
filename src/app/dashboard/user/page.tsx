@@ -2,10 +2,44 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+
+interface UserStats {
+    pendingRequests: number;
+    approvedRequests: number;
+    currentlyIssued: number;
+    overdueCount: number;
+    upcomingDue: string | null;
+    isBanned: boolean;
+    bannedUntil: string | null;
+}
 
 export default function UserDashboard() {
     const { data: session, status } = useSession();
     const router = useRouter();
+    const [stats, setStats] = useState<UserStats | null>(null);
+    const [loadingStats, setLoadingStats] = useState(true);
+
+    // Fetch statistics
+    useEffect(() => {
+        if (status === 'authenticated' && session?.user?.role === 'USER') {
+            fetchStats();
+        }
+    }, [status, session]);
+
+    const fetchStats = async () => {
+        try {
+            const response = await fetch('/api/user/stats');
+            if (response.ok) {
+                const data = await response.json();
+                setStats(data);
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
 
     // Redirect if not user
     if (status === 'authenticated' && session?.user?.role !== 'USER') {
@@ -71,12 +105,100 @@ export default function UserDashboard() {
                     </p>
                 </div>
 
+                {/* Statistics Cards */}
+                {!loadingStats && stats && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        {/* Pending Requests */}
+                        <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-secondary-600">Pending Requests</p>
+                                    <p className="text-3xl font-bold text-secondary-800 mt-1">{stats.pendingRequests}</p>
+                                </div>
+                                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                    <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Active Issues */}
+                        <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-secondary-600">Active Issues</p>
+                                    <p className="text-3xl font-bold text-secondary-800 mt-1">{stats.currentlyIssued}</p>
+                                </div>
+                                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Overdue Items */}
+                        <div className="bg-white rounded-xl shadow-md p-6 border border-red-200">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-secondary-600">Overdue Items</p>
+                                    <p className="text-3xl font-bold text-red-600 mt-1">{stats.overdueCount}</p>
+                                </div>
+                                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Upcoming Due */}
+                        <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-secondary-600">Next Return Due</p>
+                                    <p className="text-sm font-semibold text-secondary-800 mt-1">
+                                        {stats.upcomingDue ? new Date(stats.upcomingDue).toLocaleDateString() : 'None'}
+                                    </p>
+                                </div>
+                                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Ban Warning */}
+                {!loadingStats && stats?.isBanned && (
+                    <div className="bg-red-50 border-l-4 border-red-600 p-4 mb-8 rounded-r-lg">
+                        <div className="flex">
+                            <div className="flex-shrink-0">
+                                <svg className="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-red-800">
+                                    Your account is currently banned {stats.bannedUntil ? `until ${new Date(stats.bannedUntil).toLocaleDateString()}` : 'indefinitely'}.
+                                </p>
+                                <p className="mt-1 text-sm text-red-700">
+                                    {stats.bannedUntil ? 'Late return violation - you cannot request new items until the ban expires.' : 'Damage compensation required - contact admin to resolve.'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Quick Actions */}
                 <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-secondary-200">
                     <h3 className="text-lg font-semibold text-secondary-800 mb-4">Quick Actions</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <button
-                            onClick={() => alert('Item browsing coming in Phase 4!')}
+                            onClick={() => router.push('/dashboard/user/items')}
                             className="flex items-center p-4 border-2 border-secondary-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
                         >
                             <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,7 +211,7 @@ export default function UserDashboard() {
                         </button>
 
                         <button
-                            onClick={() => alert('Request system coming in Phase 5!')}
+                            onClick={() => router.push('/dashboard/user/items')}
                             className="flex items-center p-4 border-2 border-secondary-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
                         >
                             <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,7 +224,7 @@ export default function UserDashboard() {
                         </button>
 
                         <button
-                            onClick={() => alert('Request history coming in Phase 5!')}
+                            onClick={() => router.push('/dashboard/user/requests')}
                             className="flex items-center p-4 border-2 border-secondary-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
                         >
                             <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +237,7 @@ export default function UserDashboard() {
                         </button>
 
                         <button
-                            onClick={() => alert('Borrowed items tracking coming in Phase 5!')}
+                            onClick={() => router.push('/dashboard/user/requests')}
                             className="flex items-center p-4 border-2 border-secondary-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
                         >
                             <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,8 +260,8 @@ export default function UserDashboard() {
                         <div className="ml-3">
                             <h4 className="text-sm font-semibold text-blue-800 mb-1">Getting Started</h4>
                             <p className="text-sm text-blue-700">
-                                Item browsing and request features are coming in Phase 4 and Phase 5 of development.
-                                You'll be able to browse available items, submit borrow requests, and track your borrowed items.
+                                Browse available items from labs, submit borrow requests, and track your borrowed items.
+                                All items must be returned by their due date to avoid penalties.
                             </p>
                         </div>
                     </div>

@@ -228,6 +228,28 @@ export default function UserManagementPage() {
         }
     };
 
+    // Handle revoke ban
+    const handleRevokeBan = async (userId: string) => {
+        if (!confirm('Are you sure you want to revoke this user\'s ban? They will be able to request items immediately.')) return;
+
+        try {
+            const response = await fetch(`/api/admin/users/${userId}/revoke-ban`, {
+                method: 'PUT'
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to revoke ban');
+            }
+
+            // Refresh users
+            fetchUsers();
+            alert('Ban revoked successfully');
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
     if (status === 'loading') {
         return (
             <div className="min-h-screen bg-gradient-light flex items-center justify-center">
@@ -289,8 +311,8 @@ export default function UserManagementPage() {
                                         setPagination({ ...pagination, page: 1 });
                                     }}
                                     className={`${activeTab === tab.key
-                                            ? 'border-primary-500 text-primary-600'
-                                            : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
+                                        ? 'border-primary-500 text-primary-600'
+                                        : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
                                         } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
                                 >
                                     {tab.label}
@@ -335,6 +357,7 @@ export default function UserManagementPage() {
                     onRoleChange={handleRoleChange}
                     onStatusToggle={handleStatusToggle}
                     onDelete={handleDelete}
+                    onRevokeBan={handleRevokeBan}
                     isLoading={isLoading}
                 />
 

@@ -1,0 +1,230 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model with role-based access
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password      String?
+  role          UserRole @default(USER)
+  phone         String?
+  studentId     String?  @unique
+  employeeId    String?  @unique
+  department    String?
+  isApproved    Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  isBanned      Boolean  @default(false)
+  bannedUntil   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  resetToken    String?
+  resetTokenExpiry DateTime?
+
+  // Relations
+  departments        Department[]
+  issueRequests      IssueRequest[]
+  issueRecords       IssueRecord[]
+  auditLogs          AuditLog[]
+  addedItems         Item[]               @relation("AddedBy")
+
+  @@index([email])
+  @@index([role])
+}
+
+enum UserRole {
+  ADMIN
+  INCHARGE
+  USER
+}
+
+// Department model
+model Department {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  code         String   @unique
+  description  String?
+  inchargeId   String?
+  location     String?
+  contactEmail String?
+  contactPhone String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  incharge     User?    @relation(fields: [inchargeId], references: [id])
+  items        Item[]
+  issueRecords IssueRecord[]
+
+  @@index([name])
+  @@index([code])
+}
+
+
+// Category model
+model Category {
+  id                 String  @id @default(cuid())
+  name               String  @unique
+  description        String?
+  maxBorrowDuration  Int     @default(7) // in days
+  requiresApproval   Boolean @default(false)
+  visibleToStudents  Boolean @default(true)
+  visibleToStaff     Boolean @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  items Item[]
+
+  @@index([name])
+}
+
+// Item model
+model Item {
+  id             String      @id @default(cuid())
+  manualId       String      @unique // e.g., ROB-001, AI-025
+  name           String
+  serialNumber   String?
+  categoryId     String
+  departmentId   String
+  description    String?
+  specifications String?
+  imageUrl       String?
+  condition      ItemCondition @default(GOOD)
+  status         ItemStatus    @default(AVAILABLE)
+  isConsumable   Boolean       @default(false)
+  currentStock   Int?
+  minStockLevel  Int?
+  location       String?
+  purchaseDate   DateTime?
+  value          Float?
+  addedById      String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relations
+  category       Category        @relation(fields: [categoryId], references: [id])
+  department     Department      @relation(fields: [departmentId], references: [id])
+  addedBy        User            @relation("AddedBy", fields: [addedById], references: [id])
+  issueRequests  IssueRequest[]
+  issueRecords   IssueRecord[]
+
+  @@index([manualId])
+  @@index([departmentId])
+  @@index([categoryId])
+  @@index([status])
+}
+
+enum ItemCondition {
+  NEW
+  GOOD
+  FAIR
+  DAMAGED
+  UNDER_REPAIR
+}
+
+enum ItemStatus {
+  AVAILABLE
+  ISSUED
+  MAINTENANCE
+  PENDING_REPLACEMENT
+}
+
+// Issue Request model
+model IssueRequest {
+  id             String        @id @default(cuid())
+  userId         String
+  itemId         String
+  purpose        String
+  requestedDays  Int
+  requestDate    DateTime      @default(now())
+  status         RequestStatus @default(PENDING)
+  approvedBy     String?
+  approvalDate   DateTime?
+  rejectionReason String?
+  remarks        String?
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id])
+  item         Item          @relation(fields: [itemId], references: [id])
+  issueRecord  IssueRecord?
+
+  @@index([userId])
+  @@index([itemId])
+  @@index([status])
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+// Issue Record model
+model IssueRecord {
+  id                 String    @id @default(cuid())
+  requestId          String    @unique
+  itemId             String
+  userId             String
+  departmentId       String
+  issuedBy           String
+  issueDate          DateTime  @default(now())
+  expectedReturnDate DateTime
+  actualReturnDate   DateTime?
+  returnCondition    ItemCondition?
+  damageRemarks      String?
+  lateFee            Float?
+  isPendingReplacement Boolean @default(false)
+
+  // Relations
+  request    IssueRequest @relation(fields: [requestId], references: [id])
+  item       Item         @relation(fields: [itemId], references: [id])
+  user       User         @relation(fields: [userId], references: [id])
+  department Department   @relation(fields: [departmentId], references: [id])
+
+  @@index([userId])
+  @@index([itemId])
+  @@index([departmentId])
+  @@index([actualReturnDate])
+}
+
+// Audit Log model
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  action     String
+  entityType String
+  entityId   String?
+  changes    String? // JSON string
+  ipAddress  String?
+  timestamp  DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([timestamp])
+}
+
+// Settings model for configurable business rules
+model Settings {
+  id                      String   @id @default(cuid())
+  key                     String   @unique
+  value                   String
+  description             String?
+  updatedAt               DateTime @updatedAt
+
+  @@index([key])
+}

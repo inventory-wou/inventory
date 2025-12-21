@@ -2,10 +2,100 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import DepartmentChart from '@/components/admin/DepartmentChart';
+import CategoryChart from '@/components/admin/CategoryChart';
+import IssueTrendsChart from '@/components/admin/IssueTrendsChart';
+
+interface AdminStats {
+    users: {
+        total: number;
+        approved: number;
+        pending: number;
+        banned: number;
+    };
+    items: {
+        total: number;
+        available: number;
+        issued: number;
+        maintenance: number;
+    };
+    departments: number;
+    categories: number;
+    requests: {
+        pending: number;
+    };
+    overdue: number;
+    recentActivity: Array<{
+        id: string;
+        action: string;
+        entityType: string;
+        userName: string;
+        timestamp: string;
+    }>;
+}
+
+interface AnalyticsData {
+    departmentStats: Array<{
+        name: string;
+        code: string;
+        total: number;
+        available: number;
+        issued: number;
+    }>;
+    categoryStats: Array<{
+        name: string;
+        count: number;
+    }>;
+    monthlyTrends: Array<{
+        month: string;
+        issued: number;
+        returned: number;
+    }>;
+}
 
 export default function AdminDashboard() {
     const { data: session, status } = useSession();
     const router = useRouter();
+    const [stats, setStats] = useState<AdminStats | null>(null);
+    const [loadingStats, setLoadingStats] = useState(true);
+    const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+    const [loadingAnalytics, setLoadingAnalytics] = useState(true);
+
+    useEffect(() => {
+        if (status === 'authenticated' && session?.user?.role === 'ADMIN') {
+            fetchStats();
+            fetchAnalytics();
+        }
+    }, [status, session]);
+
+    const fetchStats = async () => {
+        try {
+            const response = await fetch('/api/admin/stats');
+            if (response.ok) {
+                const data = await response.json();
+                setStats(data);
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
+
+    const fetchAnalytics = async () => {
+        try {
+            const response = await fetch('/api/admin/analytics');
+            if (response.ok) {
+                const data = await response.json();
+                setAnalytics(data);
+            }
+        } catch (error) {
+            console.error('Error fetching analytics:', error);
+        } finally {
+            setLoadingAnalytics(false);
+        }
+    };
 
     if (status === 'loading') {
         return (
@@ -81,7 +171,14 @@ export default function AdminDashboard() {
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm text-secondary-600">Total Users</p>
-                                <p className="text-2xl font-bold text-secondary-800">-</p>
+                                <p className="text-2xl font-bold text-secondary-800">
+                                    {loadingStats ? '...' : stats?.users.total || 0}
+                                </p>
+                                {!loadingStats && stats && (
+                                    <p className="text-xs text-secondary-500 mt-1">
+                                        {stats.users.pending} pending
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -95,7 +192,14 @@ export default function AdminDashboard() {
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm text-secondary-600">Total Items</p>
-                                <p className="text-2xl font-bold text-secondary-800">-</p>
+                                <p className="text-2xl font-bold text-secondary-800">
+                                    {loadingStats ? '...' : stats?.items.total || 0}
+                                </p>
+                                {!loadingStats && stats && (
+                                    <p className="text-xs text-secondary-500 mt-1">
+                                        {stats.items.available} available
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -109,7 +213,14 @@ export default function AdminDashboard() {
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm text-secondary-600">Pending Requests</p>
-                                <p className="text-2xl font-bold text-secondary-800">-</p>
+                                <p className="text-2xl font-bold text-secondary-800">
+                                    {loadingStats ? '...' : stats?.requests.pending || 0}
+                                </p>
+                                {!loadingStats && stats && stats.overdue > 0 && (
+                                    <p className="text-xs text-red-600 mt-1">
+                                        {stats.overdue} overdue
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -123,7 +234,14 @@ export default function AdminDashboard() {
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm text-secondary-600">Departments</p>
-                                <p className="text-2xl font-bold text-secondary-800">-</p>
+                                <p className="text-2xl font-bold text-secondary-800">
+                                    {loadingStats ? '...' : stats?.departments || 0}
+                                </p>
+                                {!loadingStats && stats && (
+                                    <p className="text-xs text-secondary-500 mt-1">
+                                        {stats.categories} categories
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -200,7 +318,7 @@ export default function AdminDashboard() {
                         </button>
 
                         <button
-                            onClick={() => alert('Coming soon!')}
+                            onClick={() => router.push('/dashboard/admin/reports')}
                             className="flex items-center p-4 border-2 border-secondary-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
                         >
                             <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,16 +345,85 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
+                {/* Analytics & Charts */}
+                <div className="mb-8 space-y-6">
+                    <h3 className="text-lg font-semibold text-secondary-800">Analytics & Insights</h3>
+
+                    {loadingAnalytics ? (
+                        <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
+                            <div className="text-center py-8 text-secondary-500">
+                                <div className="inline-block w-8 h-8 border-4 border-secondary-200 border-t-primary-600 rounded-full animate-spin"></div>
+                                <p className="mt-4">Loading analytics...</p>
+                            </div>
+                        </div>
+                    ) : analytics ? (
+                        <>
+                            {/* Department & Category Charts */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
+                                    <h4 className="text-md font-semibold text-secondary-800 mb-4">Department-wise Inventory</h4>
+                                    <DepartmentChart data={analytics.departmentStats} />
+                                </div>
+
+                                <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
+                                    <h4 className="text-md font-semibold text-secondary-800 mb-4">Category Distribution</h4>
+                                    <CategoryChart data={analytics.categoryStats} />
+                                </div>
+                            </div>
+
+                            {/* Monthly Trends Chart */}
+                            <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
+                                <h4 className="text-md font-semibold text-secondary-800 mb-4">Issue & Return Trends (Last 12 Months)</h4>
+                                <IssueTrendsChart data={analytics.monthlyTrends} />
+                            </div>
+                        </>
+                    ) : (
+                        <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
+                            <div className="text-center py-8 text-secondary-500">
+                                <p>No analytics data available</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 {/* Recent Activity */}
                 <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
                     <h3 className="text-lg font-semibold text-secondary-800 mb-4">Recent Activity</h3>
-                    <div className="text-center py-8 text-secondary-500">
-                        <svg className="w-16 h-16 mx-auto mb-4 text-secondary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                        </svg>
-                        <p>No recent activity</p>
-                        <p className="text-sm mt-1">Activity will appear here once users start using the system</p>
-                    </div>
+                    {loadingStats ? (
+                        <div className="text-center py-8 text-secondary-500">
+                            <div className="inline-block w-8 h-8 border-4 border-secondary-200 border-t-primary-600 rounded-full animate-spin"></div>
+                            <p className="mt-4">Loading activity...</p>
+                        </div>
+                    ) : !stats || stats.recentActivity.length === 0 ? (
+                        <div className="text-center py-8 text-secondary-500">
+                            <svg className="w-16 h-16 mx-auto mb-4 text-secondary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                            </svg>
+                            <p>No recent activity</p>
+                            <p className="text-sm mt-1">Activity will appear here once users start using the system</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {stats.recentActivity.map((activity) => (
+                                <div key={activity.id} className="flex items-start p-3 bg-secondary-50 rounded-lg">
+                                    <div className="flex-shrink-0 w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                                        <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                    </div>
+                                    <div className="ml-3 flex-1">
+                                        <p className="text-sm text-secondary-800">
+                                            <span className="font-medium">{activity.userName}</span>{' '}
+                                            {activity.action.toLowerCase()} {activity.entityType.toLowerCase()}
+                                        </p>
+                                        <p className="text-xs text-secondary-500 mt-1">
+                                            {new Date(activity.timestamp).toLocaleString()}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </main>
         </div>

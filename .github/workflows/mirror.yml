@@ -10,6 +10,15 @@ jobs:
         with:
           fetch-depth: 0
       
+      - name: Verify token exists
+        run: |
+          if [ -z "${{ secrets.SYNC_TOKEN }}" ]; then
+            echo "ERROR: SYNC_TOKEN secret is not set or is empty!"
+            exit 1
+          else
+            echo "✓ SYNC_TOKEN secret is configured"
+          fi
+      
       - name: Mirror to target repository
         run: |
           git config --global user.name "GitHub Actions Bot"

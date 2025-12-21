@@ -10,6 +10,7 @@ jobs:
           fetch-depth: 0
       - uses: pixta-dev/repository-mirroring-action@v1
         with:
-          # We embed the token directly into the URL string here
-          target_repo_url: https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/inventory-wou/inventory.git
+          # Using a > allows us to put the long URL on its own clean line
+          target_repo_url: >-
+            https://x-access-token:${{secrets.SYNC_TOKEN}}@github.com/inventory-wou/inventory.git
           ssh_username: inventory-wou

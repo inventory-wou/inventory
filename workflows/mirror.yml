@@ -1,0 +1,16 @@
+name: Mirror to Project Account
+on: [push]
+
+jobs:
+  git-mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: pixta-dev/repository-mirroring-action@v1
+        with:
+          # We add the username and token to the URL for a smoother handshake
+          target_repo_url: https://github.com/inventory-wou/inventory.git
+          target_username: inventory-wou
+          target_token: ${{ secrets.SYNC_TOKEN }}

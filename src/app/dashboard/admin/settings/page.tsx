@@ -16,6 +16,16 @@ interface SettingsState {
     email_footer_text: string;
     max_items_per_user: string;
     consumable_min_stock_alert: string;
+    // Role-based permissions
+    faculty_max_borrow_days: string;
+    staff_max_borrow_days: string;
+    student_max_borrow_days: string;
+    faculty_max_items: string;
+    staff_max_items: string;
+    student_max_items: string;
+    faculty_requires_approval: string;
+    staff_requires_approval: string;
+    student_requires_approval: string;
 }
 
 export default function SettingsPage() {
@@ -32,6 +42,16 @@ export default function SettingsPage() {
         email_footer_text: 'Woxsen University Inventory Management',
         max_items_per_user: '3',
         consumable_min_stock_alert: '10',
+        // Role-based defaults
+        faculty_max_borrow_days: '30',
+        staff_max_borrow_days: '21',
+        student_max_borrow_days: '7',
+        faculty_max_items: '5',
+        staff_max_items: '3',
+        student_max_items: '2',
+        faculty_requires_approval: 'false',
+        staff_requires_approval: 'true',
+        student_requires_approval: 'true',
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -384,6 +404,137 @@ export default function SettingsPage() {
                             <p className="text-sm text-gray-500 mt-1">
                                 Minimum stock level to trigger low stock alert for consumables
                             </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Role-Based Permissions */}
+                <div className="bg-white rounded-lg shadow p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Role-Based Permissions</h2>
+
+                    {/* Faculty Section */}
+                    <div className="mb-6 pb-6 border-b border-gray-200">
+                        <h3 className="text-lg font-medium text-blue-700 mb-4">Faculty</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Max Borrow Days
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="365"
+                                    value={settings.faculty_max_borrow_days}
+                                    onChange={(e) => handleChange('faculty_max_borrow_days', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Max Items
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="20"
+                                    value={settings.faculty_max_items}
+                                    onChange={(e) => handleChange('faculty_max_items', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div className="flex items-center justify-between pt-6">
+                                <label className="text-sm font-medium text-gray-700">Requires Approval</label>
+                                <button
+                                    onClick={() => handleToggle('faculty_requires_approval')}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.faculty_requires_approval === 'true' ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                >
+                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.faculty_requires_approval === 'true' ? 'translate-x-6' : 'translate-x-1'}`} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Staff Section */}
+                    <div className="mb-6 pb-6 border-b border-gray-200">
+                        <h3 className="text-lg font-medium text-green-700 mb-4">Staff</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Max Borrow Days
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="365"
+                                    value={settings.staff_max_borrow_days}
+                                    onChange={(e) => handleChange('staff_max_borrow_days', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Max Items
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="20"
+                                    value={settings.staff_max_items}
+                                    onChange={(e) => handleChange('staff_max_items', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div className="flex items-center justify-between pt-6">
+                                <label className="text-sm font-medium text-gray-700">Requires Approval</label>
+                                <button
+                                    onClick={() => handleToggle('staff_requires_approval')}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.staff_requires_approval === 'true' ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                >
+                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.staff_requires_approval === 'true' ? 'translate-x-6' : 'translate-x-1'}`} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Student Section */}
+                    <div>
+                        <h3 className="text-lg font-medium text-purple-700 mb-4">Students</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Max Borrow Days
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="365"
+                                    value={settings.student_max_borrow_days}
+                                    onChange={(e) => handleChange('student_max_borrow_days', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Max Items
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="20"
+                                    value={settings.student_max_items}
+                                    onChange={(e) => handleChange('student_max_items', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div className="flex items-center justify-between pt-6">
+                                <label className="text-sm font-medium text-gray-700">Requires Approval</label>
+                                <button
+                                    onClick={() => handleToggle('student_requires_approval')}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.student_requires_approval === 'true' ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                >
+                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.student_requires_approval === 'true' ? 'translate-x-6' : 'translate-x-1'}`} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

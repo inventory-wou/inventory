@@ -14,7 +14,7 @@ export default async function Home() {
     if (session.user.role === 'ADMIN') redirect('/dashboard/admin');
     if (session.user.role === 'INCHARGE') redirect('/dashboard/incharge');
     // Faculty, Staff, Students go to browse page
-    redirect('/dashboard/user');
+    redirect('/dashboard/user/browse');
   }
 
   // Show public home page

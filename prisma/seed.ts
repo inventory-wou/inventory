@@ -88,6 +88,16 @@ async function main() {
         { key: 'GRACE_PERIOD_DAYS', value: '0', description: 'Grace period before late penalty applies' },
         { key: 'ALLOW_EXTENSIONS', value: 'true', description: 'Allow users to request extensions' },
         { key: 'MAX_EXTENSIONS', value: '1', description: 'Maximum number of extensions allowed per item' },
+        // Role-based permissions
+        { key: 'faculty_max_borrow_days', value: '30', description: 'Maximum borrow days for Faculty' },
+        { key: 'staff_max_borrow_days', value: '21', description: 'Maximum borrow days for Staff' },
+        { key: 'student_max_borrow_days', value: '7', description: 'Maximum borrow days for Students' },
+        { key: 'faculty_max_items', value: '5', description: 'Maximum items Faculty can borrow' },
+        { key: 'staff_max_items', value: '3', description: 'Maximum items Staff can borrow' },
+        { key: 'student_max_items', value: '2', description: 'Maximum items Students can borrow' },
+        { key: 'faculty_requires_approval', value: 'false', description: 'Faculty requests require approval' },
+        { key: 'staff_requires_approval', value: 'true', description: 'Staff requests require approval' },
+        { key: 'student_requires_approval', value: 'true', description: 'Student requests require approval' },
     ];
 
     for (const setting of defaultSettings) {

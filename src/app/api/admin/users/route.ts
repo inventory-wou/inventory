@@ -124,3 +124,63 @@ export async function GET(request: NextRequest) {
     }
 }
 
+/**
+ * POST /api/admin/users
+ * Bulk approve users
+ * Admin only
+ */
+export async function POST(request: NextRequest) {
+    try {
+        // Check authentication and admin role
+        const session = await getServerSession(authOptions);
+        if (!session || session.user.role !== 'ADMIN') {
+            return NextResponse.json(
+                { error: 'Unauthorized. Admin access required.' },
+                { status: 403 }
+            );
+        }
+
+        const body = await request.json();
+        const { userIds, action } = body;
+
+        // Validate input
+        if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+            return NextResponse.json(
+                { error: 'User IDs array is required' },
+                { status: 400 }
+            );
+        }
+
+        if (action !== 'approve') {
+            return NextResponse.json(
+                { error: 'Invalid action. Only "approve" is supported' },
+                { status: 400 }
+            );
+        }
+
+        // Bulk approve users in a transaction
+        const result = await prisma.user.updateMany({
+            where: {
+                id: { in: userIds },
+                isApproved: false // Only approve pending users
+            },
+            data: {
+                isApproved: true,
+                isActive: true
+            }
+        });
+
+        return NextResponse.json({
+            success: true,
+            message: `Successfully approved ${result.count} user(s)`,
+            count: result.count
+        });
+
+    } catch (error) {
+        console.error('Error bulk approving users:', error);
+        return NextResponse.json(
+            { error: 'Failed to approve users' },
+            { status: 500 }
+        );
+    }
+}

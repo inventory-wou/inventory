@@ -27,6 +27,7 @@ interface UserTableProps {
     onStatusToggle: (userId: string, isActive: boolean) => void;
     onDelete: (userId: string) => void;
     onRevokeBan?: (userId: string) => void;
+    onBulkApprove?: (userIds: string[]) => void;
     isLoading?: boolean;
 }
 
@@ -38,6 +39,7 @@ export default function UserTable({
     onStatusToggle,
     onDelete,
     onRevokeBan,
+    onBulkApprove,
     isLoading = false
 }: UserTableProps) {
     const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
@@ -56,9 +58,24 @@ export default function UserTable({
         if (selectedUsers.size === users.length) {
             setSelectedUsers(new Set());
         } else {
-            setSelectedUsers(new Set(users.map(u => u.id)));
+            // Only select pending users for bulk approval
+            const pendingUsers = users.filter(u => !u.isApproved);
+            setSelectedUsers(new Set(pendingUsers.map(u => u.id)));
         }
     };
+
+    const handleBulkApprove = () => {
+        if (selectedUsers.size === 0) return;
+        if (onBulkApprove) {
+            onBulkApprove(Array.from(selectedUsers));
+            setSelectedUsers(new Set()); // Clear selection after approve
+        }
+    };
+
+    const pendingUsers = users.filter(u => !u.isApproved);
+    const selectedPendingCount = Array.from(selectedUsers).filter(id =>
+        users.find(u => u.id === id && !u.isApproved)
+    ).length;
 
     const getRoleBadgeColor = (role: string) => {
         switch (role) {
@@ -93,6 +110,21 @@ export default function UserTable({
 
     return (
         <div className="bg-white rounded-xl shadow-md overflow-hidden border border-secondary-200">
+            {/* Bulk Actions Bar */}
+            {selectedPendingCount > 0 && onBulkApprove && (
+                <div className="bg-primary-50 border-b border-primary-200 px-6 py-3 flex items-center justify-between">
+                    <span className="text-sm font-medium text-primary-700">
+                        {selectedPendingCount} pending user(s) selected
+                    </span>
+                    <button
+                        onClick={handleBulkApprove}
+                        className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                        Approve Selected ({selectedPendingCount})
+                    </button>
+                </div>
+            )}
+
             {/* Desktop Table View */}
             <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-secondary-200">
@@ -101,7 +133,7 @@ export default function UserTable({
                             <th className="px-6 py-3 text-left">
                                 <input
                                     type="checkbox"
-                                    checked={selectedUsers.size === users.length && users.length > 0}
+                                    checked={selectedUsers.size > 0 && selectedPendingCount === pendingUsers.length && pendingUsers.length > 0}
                                     onChange={toggleSelectAll}
                                     className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
                                 />

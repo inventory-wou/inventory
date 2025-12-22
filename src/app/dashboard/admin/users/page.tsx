@@ -250,6 +250,31 @@ export default function UserManagementPage() {
         }
     };
 
+    // Handle bulk approve
+    const handleBulkApprove = async (userIds: string[]) => {
+        if (!confirm(`Approve ${userIds.length} user(s)?`)) return;
+
+        try {
+            const response = await fetch('/api/admin/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userIds, action: 'approve' })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to approve users');
+            }
+
+            const data = await response.json();
+            // Refresh users
+            fetchUsers();
+            alert(data.message || `Successfully approved ${data.count} user(s)`);
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
     if (status === 'loading') {
         return (
             <div className="min-h-screen bg-gradient-light flex items-center justify-center">
@@ -358,6 +383,7 @@ export default function UserManagementPage() {
                     onStatusToggle={handleStatusToggle}
                     onDelete={handleDelete}
                     onRevokeBan={handleRevokeBan}
+                    onBulkApprove={handleBulkApprove}
                     isLoading={isLoading}
                 />
 

@@ -2,10 +2,10 @@
 
 A comprehensive inventory management system for Robotics Lab, AI Research Centre, and Metaverse Lab at Woxsen University.
 
-## 🚀 **Current Status: Phase 7 Complete (100%)**
+## 🚀 **Current Status: Phase 8 Complete (100%)**
 
-**Implemented**: Phases 1-7 (Complete)  
-**Total Progress**: 7/9 Phases (78%)
+**Implemented**: Phases 1-8 (Complete)  
+**Total Progress**: 8/9 Phases (89%)
 
 ---
 
@@ -261,15 +261,52 @@ Complete university inventory management system with:
 
 ---
 
-### ❌ Phase 8: Advanced Features (0%)
+### ✅ Phase 8: Advanced Features (100%)
 
-**Planned Features**
-- [ ] Bulk item import (CSV/Excel)
-- [ ] Bulk category creation
-- [ ] Advanced search
-- [ ] In-app notifications
+**Bulk Import System**
+- ✅ **Bulk Item Import (CSV/Excel)**
+  - Upload up to 1000 items per file (10MB limit)
+  - CSV and Excel (.xlsx) support
+  - Comprehensive validation (departments, categories, duplicates)
+  - Dry-run mode for validation-only
+  - Detailed error reporting with row numbers
+  - Auto-generated manual IDs
+  - Template downloads (CSV + Excel)
+  - Drag-and-drop file upload UI
+  - Error report download as CSV
+  - Parse libraries: `csv-parse` + `xlsx`
+- ✅ **Bulk Category Creation**
+  - Quick-add modal for up to 5 categories
+  - Multi-row form interface
+  - Automatic duplicate detection
+  - Skips existing categories
+  - Real-time error/success feedback
+  - Creates up to 50 categories per request
+
+**Advanced Search System**
+- ✅ **Backend API (10+ Filters)**
+  - Full-text search across 5 fields (name, ID, serial, description, specs)
+  - Multi-select filters: departments, categories, status, condition
+  - Range filters: value (min/max), purchase date (from/to)
+  - Low stock filter for consumables
+  - Flexible sorting (name, value, date) with asc/desc
+  - Efficient Prisma queries with pagination
+- ✅ **Frontend UI**
+  - Collapsible advanced filter panel
+  - Multi-select checkboxes (scrollable lists)
+  - Date and value range inputs
+  - Active filter chips with color coding
+  - Filter count badge on Advanced button
+  - Clear all filters button
+  - Real-time filtering (no submit needed)
+  - Bulk Import quick link
+
+**Optional Future Enhancements**
+- [ ] Search history/saved searches
+- [ ] Export search results
+- [ ] In-app notifications (optimized)
 - [ ] Push notifications
-- [ ] SMS notifications (optional)
+- [ ] SMS notifications
 
 ---
 
@@ -321,6 +358,8 @@ Complete university inventory management system with:
   "qrcode": "^1.5.4",
   "exceljs": "^4.4.0",
   "recharts": "^3.6.0",
+  "csv-parse": "^5.x.x",
+  "xlsx": "^0.18.x",
   "@eslint/eslintrc": "^3.2.0"
 }
 ```
@@ -591,12 +630,23 @@ enum RequestStatus {
 - `DELETE /api/admin/categories/[id]` - Delete category
 
 ### Items (Admin + Incharge)
-- `GET /api/admin/items` - List items (with filters & pagination)
+- `GET /api/admin/items` - List items (with advanced filters & pagination)
+  - Query params: search, departments, categories, statuses, conditions, minValue, maxValue, purchasedAfter, purchasedBefore, lowStock, sortBy, sortOrder
 - `POST /api/admin/items` - Create item (auto-generates manual ID)
 - `GET /api/admin/items/[id]` - Get single item
 - `PUT /api/admin/items/[id]` - Update item
 - `DELETE /api/admin/items/[id]` - Delete item
+- `POST /api/admin/items/bulk-import` - Bulk import items (CSV/Excel)
+  - Supports: multipart/form-data, dryRun mode, validation, error reporting
+- `GET /api/admin/items/bulk-import/template` - Download import template (CSV or Excel)
 - `GET /api/items/[id]/label` - Generate printable QR label
+
+### Categories (Admin + Incharge)
+- `GET /api/admin/categories` - List categories (with search)
+- `POST /api/admin/categories` - Create category
+- `POST /api/admin/categories/bulk` - Create multiple categories (up to 50)
+- `PUT /api/admin/categories/[id]` - Update category
+- `DELETE /api/admin/categories/[id]` - Delete category
 
 ---
 

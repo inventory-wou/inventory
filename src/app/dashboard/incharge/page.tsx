@@ -56,39 +56,6 @@ export default function InchargeDashboard() {
 
     return (
         <div className="min-h-screen bg-gradient-light">
-            {/* Header */}
-            <header className="bg-white border-b border-secondary-200 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16">
-                        <div className="flex items-center">
-                            <div className="flex-shrink-0">
-                                <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div className="ml-4">
-                                <h1 className="text-xl font-bold text-secondary-800">Inventory System</h1>
-                                <p className="text-xs text-secondary-500">Incharge Dashboard</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            <div className="text-right">
-                                <p className="text-sm font-medium text-secondary-800">{session?.user?.name}</p>
-                                <p className="text-xs text-secondary-500">{session?.user?.email}</p>
-                            </div>
-                            <button
-                                onClick={() => signOut({ callbackUrl: '/login' })}
-                                className="px-4 py-2 bg-secondary-100 hover:bg-secondary-200 text-secondary-700 rounded-lg text-sm font-medium transition-colors"
-                            >
-                                Sign Out
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Welcome Section */}

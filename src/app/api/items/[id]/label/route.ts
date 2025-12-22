@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import QRCode from 'qrcode';
 
@@ -9,48 +9,48 @@ import QRCode from 'qrcode';
  * Generate printable label with QR code for an item
  */
 export async function GET(
-    request: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session || !['ADMIN', 'INCHARGE'].includes(session.user.role)) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-        }
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !['ADMIN', 'INCHARGE'].includes(session.user.role)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
 
-        const { id } = await params;
+    const { id } = await params;
 
-        // Fetch item details
-        const item = await prisma.item.findUnique({
-            where: { id },
-            include: {
-                department: { select: { name: true, code: true } },
-                category: { select: { name: true } }
-            }
-        });
+    // Fetch item details
+    const item = await prisma.item.findUnique({
+      where: { id },
+      include: {
+        department: { select: { name: true, code: true } },
+        category: { select: { name: true } }
+      }
+    });
 
-        if (!item) {
-            return NextResponse.json({ error: 'Item not found' }, { status: 404 });
-        }
+    if (!item) {
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+    }
 
-        // Incharge access control
-        if (session.user.role === 'INCHARGE' && item.department.inchargeId !== session.user.id) {
-            return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-        }
+    // Incharge access control
+    if (session.user.role === 'INCHARGE' && item.department.inchargeId !== session.user.id) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
 
-        // Generate QR code (encode item URL or manual ID)
-        const qrData = `${process.env.NEXTAUTH_URL}/items/${item.id}`;
-        const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
-            width: 200,
-            margin: 1,
-            color: {
-                dark: '#000000',
-                light: '#FFFFFF'
-            }
-        });
+    // Generate QR code (encode item URL or manual ID)
+    const qrData = `${process.env.NEXTAUTH_URL}/items/${item.id}`;
+    const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
+      width: 200,
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
 
-        // Generate HTML for printable label
-        const htmlContent = `
+    // Generate HTML for printable label
+    const htmlContent = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -161,14 +161,14 @@ export async function GET(
 </html>
     `;
 
-        return new NextResponse(htmlContent, {
-            headers: {
-                'Content-Type': 'text/html',
-            },
-        });
+    return new NextResponse(htmlContent, {
+      headers: {
+        'Content-Type': 'text/html',
+      },
+    });
 
-    } catch (error) {
-        console.error('Error generating label:', error);
-        return NextResponse.json({ error: 'Failed to generate label' }, { status: 500 });
-    }
+  } catch (error) {
+    console.error('Error generating label:', error);
+    return NextResponse.json({ error: 'Failed to generate label' }, { status: 500 });
+  }
 }

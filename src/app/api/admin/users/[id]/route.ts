@@ -31,7 +31,7 @@ export async function DELETE(
             include: {
                 issueRecords: {
                     where: {
-                        returnDate: null // Active borrows
+                        actualReturnDate: null // Active borrows
                     }
                 }
             }

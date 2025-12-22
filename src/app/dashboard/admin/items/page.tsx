@@ -47,12 +47,20 @@ export default function ItemsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // Filters
+    // Advanced Search Filters
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterDept, setFilterDept] = useState('');
-    const [filterCategory, setFilterCategory] = useState('');
-    const [filterStatus, setFilterStatus] = useState('');
-    const [filterCondition, setFilterCondition] = useState('');
+    const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+    const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
+    const [minValue, setMinValue] = useState('');
+    const [maxValue, setMaxValue] = useState('');
+    const [purchasedAfter, setPurchasedAfter] = useState('');
+    const [purchasedBefore, setPurchasedBefore] = useState('');
+    const [lowStockOnly, setLowStockOnly] = useState(false);
+    const [sortBy, setSortBy] = useState('createdAt');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
     // Pagination
     const [page, setPage] = useState(1);
@@ -98,13 +106,21 @@ export default function ItemsPage() {
             setIsLoading(true);
             const params = new URLSearchParams({
                 page: page.toString(),
-                limit: '12'
+                limit: '12',
+                sortBy,
+                sortOrder
             });
+
             if (searchQuery) params.append('search', searchQuery);
-            if (filterDept) params.append('departmentId', filterDept);
-            if (filterCategory) params.append('categoryId', filterCategory);
-            if (filterStatus) params.append('status', filterStatus);
-            if (filterCondition) params.append('condition', filterCondition);
+            if (selectedDepartments.length > 0) params.append('departments', selectedDepartments.join(','));
+            if (selectedCategories.length > 0) params.append('categories', selectedCategories.join(','));
+            if (selectedStatuses.length > 0) params.append('statuses', selectedStatuses.join(','));
+            if (selectedConditions.length > 0) params.append('conditions', selectedConditions.join(','));
+            if (minValue) params.append('minValue', minValue);
+            if (maxValue) params.append('maxValue', maxValue);
+            if (purchasedAfter) params.append('purchasedAfter', purchasedAfter);
+            if (purchasedBefore) params.append('purchasedBefore', purchasedBefore);
+            if (lowStockOnly) params.append('lowStock', 'true');
 
             const response = await fetch(`/api/admin/items?${params.toString()}`);
             if (!response.ok) throw new Error('Failed to fetch items');
@@ -155,7 +171,44 @@ export default function ItemsPage() {
             fetchDepartments();
             fetchCategories();
         }
-    }, [status, page, searchQuery, filterDept, filterCategory, filterStatus, filterCondition]);
+    }, [status, page, searchQuery, selectedDepartments, selectedCategories, selectedStatuses, selectedConditions, minValue, maxValue, purchasedAfter, purchasedBefore, lowStockOnly, sortBy, sortOrder]);
+
+    const clearAllFilters = () => {
+        setSearchQuery('');
+        setSelectedDepartments([]);
+        setSelectedCategories([]);
+        setSelectedStatuses([]);
+        setSelectedConditions([]);
+        setMinValue('');
+        setMaxValue('');
+        setPurchasedAfter('');
+        setPurchasedBefore('');
+        setLowStockOnly(false);
+        setSortBy('createdAt');
+        setSortOrder('desc');
+        setPage(1);
+    };
+
+    const toggleArrayFilter = (value: string, current: string[], setter: (val: string[]) => void) => {
+        if (current.includes(value)) {
+            setter(current.filter(v => v !== value));
+        } else {
+            setter([...current, value]);
+        }
+    };
+
+    const getActiveFilterCount = () => {
+        let count = 0;
+        if (searchQuery) count++;
+        if (selectedDepartments.length > 0) count++;
+        if (selectedCategories.length > 0) count++;
+        if (selectedStatuses.length > 0) count++;
+        if (selectedConditions.length > 0) count++;
+        if (minValue || maxValue) count++;
+        if (purchasedAfter || purchasedBefore) count++;
+        if (lowStockOnly) count++;
+        return count;
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -333,61 +386,189 @@ export default function ItemsPage() {
                     </div>
                 </div>
 
-                {/* Filters */}
-                <div className="bg-white rounded-lg shadow-md p-4 mb-6 border border-secondary-200">
-                    <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-                        <div className="md:col-span-2">
+                {/* Advanced Search Panel */}
+                <div className="bg-white rounded-lg shadow-md border border-secondary-200 mb-6">
+                    <div className="p-4">
+                        <div className="flex gap-3 mb-3">
                             <input
                                 type="text"
-                                placeholder="Search items..."
+                                placeholder="🔍 Search items (name, ID, serial, description, specs)..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                                className="flex-1 px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
                             />
+                            <button
+                                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${showAdvancedFilters ? 'bg-primary-600 text-white' : 'bg-secondary-100 text-secondary-700'
+                                    }`}
+                            >
+                                Advanced
+                                {getActiveFilterCount() > 0 && (
+                                    <span className="bg-white text-primary-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                                        {getActiveFilterCount()}
+                                    </span>
+                                )}
+                            </button>
+                            {getActiveFilterCount() > 0 && (
+                                <button onClick={clearAllFilters} className="px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium">
+                                    Clear All
+                                </button>
+                            )}
+                            <button
+                                onClick={() => router.push('/dashboard/admin/items/bulk-import')}
+                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                            >
+                                📤 Bulk Import
+                            </button>
                         </div>
-                        <select
-                            value={filterDept}
-                            onChange={(e) => setFilterDept(e.target.value)}
-                            className="px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-                        >
-                            <option value="">All Departments</option>
-                            {departments.map(d => (
-                                <option key={d.id} value={d.id}>{d.name}</option>
-                            ))}
-                        </select>
-                        <select
-                            value={filterCategory}
-                            onChange={(e) => setFilterCategory(e.target.value)}
-                            className="px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-                        >
-                            <option value="">All Categories</option>
-                            {categories.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
-                        <select
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                            className="px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-                        >
-                            <option value="">All Status</option>
-                            <option value="AVAILABLE">Available</option>
-                            <option value="ISSUED">Issued</option>
-                            <option value="MAINTENANCE">Maintenance</option>
-                            <option value="PENDING_REPLACEMENT">Pending Replacement</option>
-                        </select>
-                        <select
-                            value={filterCondition}
-                            onChange={(e) => setFilterCondition(e.target.value)}
-                            className="px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-                        >
-                            <option value="">All Conditions</option>
-                            <option value="NEW">New</option>
-                            <option value="GOOD">Good</option>
-                            <option value="FAIR">Fair</option>
-                            <option value="DAMAGED">Damaged</option>
-                            <option value="UNDER_REPAIR">Under Repair</option>
-                        </select>
+
+                        {/* Advanced Filters Panel */}
+                        {showAdvancedFilters && (
+                            <div className="p-4 bg-gray-50 rounded-lg border border-secondary-200">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                                    {/* Departments */}
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Departments</label>
+                                        <div className="max-h-32 overflow-y-auto border rounded-lg p-2 bg-white">
+                                            {departments.map(d => (
+                                                <label key={d.id} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedDepartments.includes(d.id)}
+                                                        onChange={() => toggleArrayFilter(d.id, selectedDepartments, setSelectedDepartments)}
+                                                    />
+                                                    <span className="text-sm">{d.name}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Categories */}
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Categories</label>
+                                        <div className="max-h-32 overflow-y-auto border rounded-lg p-2 bg-white">
+                                            {categories.map(c => (
+                                                <label key={c.id} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedCategories.includes(c.id)}
+                                                        onChange={() => toggleArrayFilter(c.id, selectedCategories, setSelectedCategories)}
+                                                    />
+                                                    <span className="text-sm">{c.name}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Status */}
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Status</label>
+                                        <div className="space-y-1">
+                                            {['AVAILABLE', 'ISSUED', 'MAINTENANCE', 'PENDING_REPLACEMENT'].map(s => (
+                                                <label key={s} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer rounded">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedStatuses.includes(s)}
+                                                        onChange={() => toggleArrayFilter(s, selectedStatuses, setSelectedStatuses)}
+                                                    />
+                                                    <span className="text-sm">{s.replace('_', ' ')}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Condition */}
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Condition</label>
+                                        <div className="space-y-1">
+                                            {['NEW', 'GOOD', 'FAIR', 'DAMAGED', 'UNDER_REPAIR'].map(c => (
+                                                <label key={c} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer rounded">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedConditions.includes(c)}
+                                                        onChange={() => toggleArrayFilter(c, selectedConditions, setSelectedConditions)}
+                                                    />
+                                                    <span className="text-sm">{c.replace('_', ' ')}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Value Range */}
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Value Range (₹)</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="number"
+                                                placeholder="Min"
+                                                value={minValue}
+                                                onChange={(e) => setMinValue(e.target.value)}
+                                                className="w-1/2 px-3 py-2 border rounded text-sm"
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="Max"
+                                                value={maxValue}
+                                                onChange={(e) => setMaxValue(e.target.value)}
+                                                className="w-1/2 px-3 py-2 border rounded text-sm"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Date Range */}
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Purchase Date</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="date"
+                                                value={purchasedAfter}
+                                                onChange={(e) => setPurchasedAfter(e.target.value)}
+                                                className="w-1/2 px-3 py-2 border rounded text-sm"
+                                            />
+                                            <input
+                                                type="date"
+                                                value={purchasedBefore}
+                                                onChange={(e) => setPurchasedBefore(e.target.value)}
+                                                className="w-1/2 px-3 py-2 border rounded text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-4">
+                                    <label className="flex items-center gap-2">
+                                        <input type="checkbox" checked={lowStockOnly} onChange={(e) => setLowStockOnly(e.target.checked)} />
+                                        <span className="text-sm">📉 Low Stock Only</span>
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-sm font-medium">Sort:</label>
+                                        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="px-3 py-1 border rounded text-sm">
+                                            <option value="createdAt">Date Added</option>
+                                            <option value="name">Name</option>
+                                            <option value="value">Value</option>
+                                            <option value="purchaseDate">Purchase Date</option>
+                                        </select>
+                                        <button onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="px-2 py-1 bg-gray-200 rounded text-sm">
+                                            {sortOrder === 'asc' ? '↑' : '↓'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Active Filters */}
+                        {getActiveFilterCount() > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">
+                                {searchQuery && <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">Search: {searchQuery.substring(0, 20)}</span>}
+                                {selectedDepartments.length > 0 && <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">Depts: {selectedDepartments.length}</span>}
+                                {selectedCategories.length > 0 && <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">Cats: {selectedCategories.length}</span>}
+                                {selectedStatuses.length > 0 && <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Status: {selectedStatuses.length}</span>}
+                                {selectedConditions.length > 0 && <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs">Cond: {selectedConditions.length}</span>}
+                                {(minValue || maxValue) && <span className="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">Value Range</span>}
+                                {(purchasedAfter || purchasedBefore) && <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs">Date Range</span>}
+                                {lowStockOnly && <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs">Low Stock</span>}
+                            </div>
+                        )}
                     </div>
                 </div>
 

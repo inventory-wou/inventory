@@ -26,6 +26,7 @@ export default function CategoriesPage() {
     const [error, setError] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [showModal, setShowModal] = useState(false);
+    const [showBulkModal, setShowBulkModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
     const [formData, setFormData] = useState({
@@ -126,6 +127,48 @@ export default function CategoriesPage() {
         }
     };
 
+    const [bulkCategories, setBulkCategories] = useState<Array<{ name: string; description: string; maxBorrowDuration: number }>>(
+        Array(5).fill({ name: '', description: '', maxBorrowDuration: 7 })
+    );
+    const [bulkResult, setBulkResult] = useState<any>(null);
+
+    const handleBulkSubmit = async () => {
+        const validCategories = bulkCategories.filter(cat => cat.name.trim() !== '');
+
+        if (validCategories.length === 0) {
+            alert('Please enter at least one category name');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/admin/categories/bulk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ categories: validCategories })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error);
+            }
+
+            const result = await response.json();
+            setBulkResult(result);
+
+            if (result.created > 0) {
+                fetchCategories();
+                alert(result.message);
+                if (result.errors.length === 0) {
+                    setShowBulkModal(false);
+                    setBulkCategories(Array(5).fill({ name: '', description: '', maxBorrowDuration: 7 }));
+                    setBulkResult(null);
+                }
+            }
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
     if (status === 'loading') {
         return (
             <div className="min-h-screen bg-gradient-light flex items-center justify-center">
@@ -147,6 +190,16 @@ export default function CategoriesPage() {
                             <p className="text-sm text-secondary-600 mt-1">Manage item categories</p>
                         </div>
                         <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setBulkCategories(Array(5).fill({ name: '', description: '', maxBorrowDuration: 7 }));
+                                    setBulkResult(null);
+                                    setShowBulkModal(true);
+                                }}
+                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                            >
+                                ⚡ Quick Add
+                            </button>
                             <button
                                 onClick={() => {
                                     setEditingCategory(null);
@@ -324,6 +377,99 @@ export default function CategoriesPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Bulk Create Modal */}
+            {showBulkModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+                    <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 my-8">
+                        <h2 className="text-xl font-bold text-secondary-800 mb-4">Quick Add Categories</h2>
+                        <p className="text-sm text-secondary-600 mb-4">Add up to 5 categories at once. Only name is required.</p>
+
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                            {bulkCategories.map((cat, index) => (
+                                <div key={index} className="flex gap-2 items-start p-3 bg-gray-50 rounded-lg">
+                                    <div className="w-8 h-8 flex items-center justify-center bg-primary-100 text-primary-700 rounded font-bold text-sm">
+                                        {index + 1}
+                                    </div>
+                                    <div className="flex-1 grid grid-cols-3 gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Category name *"
+                                            value={cat.name}
+                                            onChange={(e) => {
+                                                const newCats = [...bulkCategories];
+                                                newCats[index] = { ...newCats[index], name: e.target.value };
+                                                setBulkCategories(newCats);
+                                            }}
+                                            className="px-3 py-2 border border-secondary-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Description"
+                                            value={cat.description}
+                                            onChange={(e) => {
+                                                const newCats = [...bulkCategories];
+                                                newCats[index] = { ...newCats[index], description: e.target.value };
+                                                setBulkCategories(newCats);
+                                            }}
+                                            className="px-3 py-2 border border-secondary-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                                        />
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="365"
+                                            value={cat.maxBorrowDuration}
+                                            onChange={(e) => {
+                                                const newCats = [...bulkCategories];
+                                                newCats[index] = { ...newCats[index], maxBorrowDuration: parseInt(e.target.value) || 7 };
+                                                setBulkCategories(newCats);
+                                            }}
+                                            className="px-3 py-2 border border-secondary-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {bulkResult && bulkResult.errors.length > 0 && (
+                            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                <p className="text-sm font-semibold text-red-800 mb-2">Errors:</p>
+                                <ul className="text-sm text-red-700 space-y-1">
+                                    {bulkResult.errors.map((err: any, idx: number) => (
+                                        <li key={idx}>#{err.index} "{err.name}": {err.error}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {bulkResult && bulkResult.skippedNames.length > 0 && (
+                            <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p className="text-sm text-yellow-800">Skipped (already exist): {bulkResult.skippedNames.join(', ')}</p>
+                            </div>
+                        )}
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowBulkModal(false);
+                                    setBulkCategories(Array(5).fill({ name: '', description: '', maxBorrowDuration: 7 }));
+                                    setBulkResult(null);
+                                }}
+                                className="flex-1 px-4 py-2 bg-secondary-100 hover:bg-secondary-200 text-secondary-700 rounded-lg font-medium"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleBulkSubmit}
+                                className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium"
+                            >
+                                Create Categories
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

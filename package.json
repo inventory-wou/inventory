@@ -40,6 +40,7 @@
     "@tailwindcss/forms": "^0.5.9",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.5.1",
+    "csv-parse": "^6.1.0",
     "exceljs": "^4.4.0",
     "next": "^15.5.9",
     "next-auth": "^4.24.11",
@@ -50,11 +51,13 @@
     "react-dom": "^19.2.3",
     "react-hook-form": "^7.54.2",
     "recharts": "^3.6.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/csv-parse": "^1.1.12",
     "@types/node": "^22",
     "@types/nodemailer": "^7.0.0",
     "@types/qrcode": "^1.5.6",

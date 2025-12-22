@@ -2,10 +2,10 @@
 
 A comprehensive inventory management system for Robotics Lab, AI Research Centre, and Metaverse Lab at Woxsen University.
 
-## 🚀 **Current Status: Phase 8 Complete (100%)**
+## 🚀 **Current Status: Phase 8 Complete + UI Enhancements (100%)**
 
-**Implemented**: Phases 1-8 (Complete)  
-**Total Progress**: 8/9 Phases (89%)
+**Implemented**: Phases 1-8 + Enhanced User Roles & Home Page  
+**Total Progress**: 8/9 Phases + UI Enhancements (95%)
 
 ---
 
@@ -57,19 +57,42 @@ Complete university inventory management system with:
 
 **Authentication System**
 - ✅ User registration with approval workflow
+- ✅ **5 User Roles**: Admin, Incharge, Faculty, Staff, Student
+- ✅ Role selection during registration (4 public roles)
 - ✅ Login with show/hide password toggle
 - ✅ Session management (NextAuth)
+- ✅ **Session-aware redirects** (auto-redirect logged-in users)
 - ✅ Protected routes and API endpoints
 - ✅ **Forgot Password System**
   - Email-based password reset
   - Token expiry (1 hour)
   - Secure reset workflow
   - Styled email templates
+- ✅ **Public Home Page**
+  - Hero section with CTAs
+  - Features showcase
+  - Who can register (Student, Faculty, Staff info)
+  - How to use (4-step guide)
+  - Session check (redirect if logged in)
+
+**UI Components**
+- ✅ **Header Component**
+  - WoU branding: "WoU Inventory Management System"
+  - Session-aware navigation
+  - User avatar + name + role display
+  - Login/Register buttons (when logged out)
+  - Logout functionality
+- ✅ **Footer Component**
+  - University branding
+  - Department list (ROBO, AI, META)
+  - Contact email: inventory_wou@woxsen.edu.in
+  - Location information
+- ✅ **Consistent branding** across all auth pages
 
 **User Management (Admin)**
 - ✅ User listing with search
 - ✅ Approve/reject pending users
-- ✅ Assign roles (Admin, Incharge, User)
+- ✅ Assign roles (Admin, Incharge, Faculty, Staff, Student)
 - ✅ Activate/deactivate users
 - ✅ Delete users
 - ✅ Complete audit trail
@@ -77,7 +100,7 @@ Complete university inventory management system with:
 **Dashboards**
 - ✅ Admin dashboard
 - ✅ Incharge dashboard
-- ✅ User dashboard
+- ✅ User dashboard (Faculty, Staff, Students)
 - ✅ Role-based navigation
 
 ---

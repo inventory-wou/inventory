@@ -24,7 +24,7 @@ export async function GET(
     const item = await prisma.item.findUnique({
       where: { id },
       include: {
-        department: { select: { name: true, code: true } },
+        department: { select: { name: true, code: true, inchargeId: true } },
         category: { select: { name: true } }
       }
     });

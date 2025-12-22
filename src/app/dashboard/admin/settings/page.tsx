@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface SettingsState {
     late_return_ban_months: string;
@@ -152,6 +153,19 @@ export default function SettingsPage() {
 
     return (
         <div className="p-6 max-w-5xl mx-auto">
+            {/* Back to Dashboard Button */}
+            <div className="mb-6">
+                <Link
+                    href="/dashboard/admin"
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-secondary-700 bg-white hover:bg-secondary-50 border border-secondary-300 rounded-lg transition-colors"
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Dashboard
+                </Link>
+            </div>
+
             <div className="mb-6">
                 <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
                 <p className="text-gray-600 mt-2">Configure business rules and system behavior</p>
@@ -161,8 +175,8 @@ export default function SettingsPage() {
             {message && (
                 <div
                     className={`mb-6 p-4 rounded-lg ${message.type === 'success'
-                            ? 'bg-green-100 text-green-800 border border-green-300'
-                            : 'bg-red-100 text-red-800 border border-red-300'
+                        ? 'bg-green-100 text-green-800 border border-green-300'
+                        : 'bg-red-100 text-red-800 border border-red-300'
                         }`}
                 >
                     {message.text}

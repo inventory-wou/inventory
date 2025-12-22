@@ -304,7 +304,7 @@ export default function AdminDashboard() {
                         </button>
 
                         <button
-                            onClick={() => alert('Coming soon!')}
+                            onClick={() => router.push('/dashboard/admin/settings')}
                             className="flex items-center p-4 border-2 border-secondary-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
                         >
                             <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

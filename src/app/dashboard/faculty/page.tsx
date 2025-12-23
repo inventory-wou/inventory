@@ -15,15 +15,28 @@ interface UserStats {
     bannedUntil: string | null;
 }
 
+interface RoleSettings {
+    maxBorrowDays: number;
+    maxItems: number;
+    requiresApproval: boolean;
+}
+
 export default function FacultyDashboard() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const [stats, setStats] = useState<UserStats | null>(null);
     const [loadingStats, setLoadingStats] = useState(true);
+    const [roleSettings, setRoleSettings] = useState<RoleSettings>({
+        maxBorrowDays: 30,
+        maxItems: 5,
+        requiresApproval: false
+    });
+    const [loadingSettings, setLoadingSettings] = useState(true);
 
     useEffect(() => {
         if (status === 'authenticated' && session?.user?.role === 'FACULTY') {
             fetchStats();
+            fetchRoleSettings();
         }
     }, [status, session]);
 
@@ -38,6 +51,26 @@ export default function FacultyDashboard() {
             console.error('Error fetching stats:', error);
         } finally {
             setLoadingStats(false);
+        }
+    };
+
+    const fetchRoleSettings = async () => {
+        try {
+            const response = await fetch('/api/admin/settings');
+            if (response.ok) {
+                const data = await response.json();
+                const settings = data.settings;
+
+                setRoleSettings({
+                    maxBorrowDays: parseInt(settings.faculty_max_borrow_days) || 30,
+                    maxItems: parseInt(settings.faculty_max_items) || 5,
+                    requiresApproval: settings.faculty_requires_approval === 'true'
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching role settings:', error);
+        } finally {
+            setLoadingSettings(false);
         }
     };
 
@@ -76,7 +109,7 @@ export default function FacultyDashboard() {
                         </span>
                     </div>
                     <p className="text-secondary-600">
-                        You can borrow up to <strong>5 items</strong> for <strong>30 days</strong> with <strong>no approval required</strong>.
+                        You can borrow up to <strong>{loadingSettings ? '...' : roleSettings.maxItems} items</strong> for <strong>{loadingSettings ? '...' : roleSettings.maxBorrowDays} days</strong> with <strong>{loadingSettings ? '...' : (roleSettings.requiresApproval ? 'approval required' : 'no approval required')}</strong>.
                     </p>
                 </div>
 
@@ -107,7 +140,7 @@ export default function FacultyDashboard() {
                                 <p className="text-sm text-secondary-600">Items Borrowed</p>
                                 <p className="text-3xl font-bold text-secondary-800 mt-1">
                                     {loadingStats ? '...' : `${stats?.currentlyIssued || 0}`}
-                                    <span className="text-lg text-secondary-500"> / 5</span>
+                                    <span className="text-lg text-secondary-500"> / {loadingSettings ? '...' : roleSettings.maxItems}</span>
                                 </p>
                             </div>
                             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -238,7 +271,7 @@ export default function FacultyDashboard() {
                             </svg>
                             <div>
                                 <p className="font-medium text-blue-900">Maximum Items</p>
-                                <p className="text-sm text-blue-700">Borrow up to 5 items simultaneously</p>
+                                <p className="text-sm text-blue-700">Borrow up to {loadingSettings ? '...' : roleSettings.maxItems} items simultaneously</p>
                             </div>
                         </div>
                         <div className="flex items-start">
@@ -247,7 +280,7 @@ export default function FacultyDashboard() {
                             </svg>
                             <div>
                                 <p className="font-medium text-blue-900">Borrow Period</p>
-                                <p className="text-sm text-blue-700">30 days per item</p>
+                                <p className="text-sm text-blue-700">{loadingSettings ? '...' : roleSettings.maxBorrowDays} days per item</p>
                             </div>
                         </div>
                         <div className="flex items-start">
@@ -256,7 +289,7 @@ export default function FacultyDashboard() {
                             </svg>
                             <div>
                                 <p className="font-medium text-blue-900">Approval Status</p>
-                                <p className="text-sm text-blue-700">No approval required</p>
+                                <p className="text-sm text-blue-700">{loadingSettings ? '...' : (roleSettings.requiresApproval ? 'Approval required' : 'No approval required')}</p>
                             </div>
                         </div>
                     </div>

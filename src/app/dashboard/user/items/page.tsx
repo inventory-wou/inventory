@@ -8,7 +8,7 @@ interface Item {
     manualId: string;
     name: string;
     description: string;
-    imageUrl: string;
+    image: string;
     condition: string;
     status: string;
     isConsumable: boolean;
@@ -193,9 +193,9 @@ export default function UserItemsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredItems.map((item) => (
                         <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                            {item.imageUrl ? (
+                            {item.image ? (
                                 <img
-                                    src={item.imageUrl}
+                                    src={item.image}
                                     alt={item.name}
                                     className="w-full h-48 object-cover"
                                 />

@@ -18,7 +18,7 @@ interface IssuedItem {
         name: string;
         manualId: string;
         serialNumber?: string;
-        imageUrl?: string;
+        image?: string;
         condition: string;
         department: { name: string };
     };
@@ -156,8 +156,8 @@ export default function InchargeReturnPage() {
                                     }`}
                             >
                                 <div className="flex items-start gap-4">
-                                    {record.item.imageUrl && (
-                                        <img src={record.item.imageUrl} alt={record.item.name} className="w-24 h-24 object-cover rounded" />
+                                    {record.item.image && (
+                                        <img src={record.item.image} alt={record.item.name} className="w-24 h-24 object-cover rounded" />
                                     )}
                                     <div className="flex-1">
                                         <div className="flex items-start justify-between mb-3">

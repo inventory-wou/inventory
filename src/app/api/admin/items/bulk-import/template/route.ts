@@ -30,7 +30,7 @@ export async function GET(request: Request) {
             'isConsumable',
             'currentStock',
             'minStockLevel',
-            'imageUrl'
+            'image'
         ];
 
         // Example row

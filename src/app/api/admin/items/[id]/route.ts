@@ -104,7 +104,7 @@ export async function PUT(
                 ...(body.location !== undefined && { location: body.location }),
                 ...(body.purchaseDate !== undefined && { purchaseDate: body.purchaseDate ? new Date(body.purchaseDate) : null }),
                 ...(body.value !== undefined && { value: body.value ? parseFloat(body.value) : null }),
-                ...(body.imageUrl !== undefined && { imageUrl: body.imageUrl })
+                ...(body.image !== undefined && { image: body.image })
             },
             include: {
                 category: true,

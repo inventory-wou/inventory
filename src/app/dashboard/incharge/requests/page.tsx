@@ -19,7 +19,7 @@ interface IssueRequest {
     item: {
         name: string;
         manualId: string;
-        imageUrl?: string;
+        image?: string;
         category: { name: string; maxBorrowDuration: number };
         department: { name: string };
     };
@@ -177,8 +177,8 @@ export default function InchargeRequestsPage() {
                         <div key={request.id} className="bg-white rounded-lg shadow-md p-6">
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex gap-4 flex-1">
-                                    {request.item.imageUrl && (
-                                        <img src={request.item.imageUrl} alt={request.item.name} className="w-24 h-24 object-cover rounded" />
+                                    {request.item.image && (
+                                        <img src={request.item.image} alt={request.item.name} className="w-24 h-24 object-cover rounded" />
                                     )}
                                     <div className="flex-1">
                                         <div className="flex items-start justify-between">

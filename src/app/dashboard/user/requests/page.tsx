@@ -15,7 +15,7 @@ interface IssueRequest {
         id: string;
         name: string;
         manualId: string;
-        imageUrl?: string;
+        image?: string;
         category: {
             name: string;
         };
@@ -129,9 +129,9 @@ export default function UserRequestsPage() {
                         <div key={request.id} className="bg-white rounded-lg shadow-md p-6">
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex gap-4">
-                                    {request.item.imageUrl && (
+                                    {request.item.image && (
                                         <img
-                                            src={request.item.imageUrl}
+                                            src={request.item.image}
                                             alt={request.item.name}
                                             className="w-20 h-20 object-cover rounded"
                                         />

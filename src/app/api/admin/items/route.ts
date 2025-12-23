@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
             location,
             purchaseDate,
             value,
-            imageUrl
+            image
         } = body;
 
         // Validate required fields
@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
                 location,
                 purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
                 value: value ? parseFloat(value) : null,
-                imageUrl,
+                image,
                 addedById: session.user.id
             },
             include: {

@@ -28,7 +28,7 @@ interface Item {
     location: string | null;
     purchaseDate: Date | null;
     value: number | null;
-    imageUrl: string | null;
+    image: string | null;
     category: { id: string; name: string };
     department: { id: string; name: string; code: string };
 }
@@ -53,7 +53,7 @@ interface ItemFormModalProps {
         location: string;
         purchaseDate: string;
         value: string;
-        imageUrl: string;
+        image: string;
     };
     onClose: () => void;
     onSubmit: (e: React.FormEvent) => void;
@@ -305,8 +305,8 @@ export default function ItemFormModal({
                             </label>
                             <input
                                 type="url"
-                                value={formData.imageUrl}
-                                onChange={(e) => onChange('imageUrl', e.target.value)}
+                                value={formData.image}
+                                onChange={(e) => onChange('image', e.target.value)}
                                 className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                                 placeholder="https://example.com/image.jpg"
                             />

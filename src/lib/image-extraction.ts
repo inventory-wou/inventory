@@ -156,20 +156,20 @@ export function matchImagesToRows(
     imageMap: Map<string, string>
 ): any[] {
     return rows.map(row => {
-        // Check if row has imageUrl field that's a filename (not a full URL)
-        if (row.imageUrl && !row.imageUrl.startsWith('http')) {
-            const filename = row.imageUrl.toLowerCase();
+        // Check if row has image field that's a filename (not a full URL)
+        if (row.image && !row.image.startsWith('http')) {
+            const filename = row.image.toLowerCase();
 
             // Try exact match first
             if (imageMap.has(filename)) {
-                row.imageUrl = imageMap.get(filename);
+                row.image = imageMap.get(filename);
             } else {
                 // Try without extension
                 const baseFilename = filename.replace(/\.[^/.]+$/, '');
                 for (const [key, url] of imageMap.entries()) {
                     const baseKey = key.replace(/\.[^/.]+$/, '');
                     if (baseKey === baseFilename) {
-                        row.imageUrl = url;
+                        row.image = url;
                         break;
                     }
                 }
@@ -190,7 +190,7 @@ export function applyExcelImages(
         const rowIndex = index + 1; // +1 because Excel is 1-indexed after header
 
         if (imageMap.has(rowIndex)) {
-            row.imageUrl = imageMap.get(rowIndex);
+            row.image = imageMap.get(rowIndex);
         }
 
         return row;

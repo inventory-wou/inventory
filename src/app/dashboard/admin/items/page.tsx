@@ -21,7 +21,7 @@ interface Item {
     location: string | null;
     purchaseDate: Date | null;
     value: number | null;
-    imageUrl: string | null;
+    image: string | null;
     category: { id: string; name: string };
     department: { id: string; name: string; code: string };
 }
@@ -84,7 +84,7 @@ export default function ItemsPage() {
         location: '',
         purchaseDate: '',
         value: '',
-        imageUrl: ''
+        image: ''
     });
 
     // Stats
@@ -256,7 +256,7 @@ export default function ItemsPage() {
             location: item.location || '',
             purchaseDate: item.purchaseDate ? new Date(item.purchaseDate).toISOString().split('T')[0] : '',
             value: item.value?.toString() || '',
-            imageUrl: item.imageUrl || ''
+            image: item.image || ''
         });
         setShowModal(true);
     };
@@ -298,7 +298,7 @@ export default function ItemsPage() {
             location: '',
             purchaseDate: '',
             value: '',
-            imageUrl: ''
+            image: ''
         });
     };
 
@@ -592,9 +592,9 @@ export default function ItemsPage() {
                                 <div key={item.id} className="bg-white rounded-xl shadow-md border border-secondary-200 overflow-hidden hover:shadow-lg transition-shadow">
                                     {/* Image */}
                                     <div className="h-48 bg-secondary-100 relative">
-                                        {item.imageUrl ? (
+                                        {item.image ? (
                                             <Image
-                                                src={item.imageUrl}
+                                                src={item.image}
                                                 alt={item.name}
                                                 fill
                                                 className="object-cover"

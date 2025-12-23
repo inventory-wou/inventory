@@ -273,7 +273,7 @@ export default function BulkImportPage() {
                     </li>
                     <li className="flex items-start gap-2">
                         <span className="text-yellow-600 font-bold">•</span>
-                        <span><strong>Images:</strong> Provide Cloudinary URLs in imageUrl column, or use the image uploader for individual items</span>
+                        <span><strong>Images:</strong> Provide Cloudinary URLs in image column, or use the image uploader for individual items</span>
                     </li>
                     <li className="flex items-start gap-2">
                         <span className="text-yellow-600 font-bold">•</span>

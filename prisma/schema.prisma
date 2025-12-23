@@ -101,7 +101,7 @@ model Item {
   departmentId   String
   description    String?
   specifications String?
-  imageUrl       String?
+  image          String?
   condition      ItemCondition @default(GOOD)
   status         ItemStatus    @default(AVAILABLE)
   isConsumable   Boolean       @default(false)

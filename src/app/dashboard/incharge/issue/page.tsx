@@ -18,7 +18,7 @@ interface ApprovedRequest {
         name: string;
         manualId: string;
         serialNumber?: string;
-        imageUrl?: string;
+        image?: string;
         category: { name: string };
         department: { name: string };
     };
@@ -118,8 +118,8 @@ export default function InchargeIssuePage() {
                     {requests.map((request) => (
                         <div key={request.id} className="bg-white rounded-lg shadow-md p-6">
                             <div className="flex items-start gap-4">
-                                {request.item.imageUrl && (
-                                    <img src={request.item.imageUrl} alt={request.item.name} className="w-24 h-24 object-cover rounded" />
+                                {request.item.image && (
+                                    <img src={request.item.image} alt={request.item.name} className="w-24 h-24 object-cover rounded" />
                                 )}
                                 <div className="flex-1">
                                     <div className="flex items-start justify-between mb-3">

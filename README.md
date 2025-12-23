@@ -2,10 +2,16 @@
 
 A comprehensive inventory management system for Robotics Lab, AI Research Centre, and Metaverse Lab at Woxsen University.
 
-## 🚀 **Current Status: Phase 8 Complete + UI Enhancements (100%)**
+## 🚀 **Current Status: Phase 8 Complete + Advanced Features (100%)**
 
-**Implemented**: Phases 1-8 + Enhanced User Roles & Home Page  
-**Total Progress**: 8/9 Phases + UI Enhancements (95%)
+**Implemented**: Phases 1-8 + Enhanced User Roles, Bulk Approval, Department Browsing & Role Permissions  
+**Total Progress**: 8/9 Phases + Advanced Features (98%)
+
+**Latest Updates (Dec 2024)**:
+- ✅ Bulk user approval system
+- ✅ Department browsing for Faculty/Staff/Students
+- ✅ Role-based permissions (configurable settings)
+- ✅ Layout optimization (unified headers)
 
 ---
 
@@ -27,11 +33,15 @@ A comprehensive inventory management system for Robotics Lab, AI Research Centre
 
 Complete university inventory management system with:
 - Multi-department support (Robotics, AI, Metaverse labs)
-- Role-based access (Admin, Incharge, User)
+- **5 User Roles**: Admin, Incharge, Faculty, Staff, Student
+- **Bulk user approval** for efficient onboarding
+- **Department browsing** with role-based item visibility
+- **Configurable role permissions** (borrow limits, approval requirements)
 - Automated email notifications
 - QR code label generation
 - Comprehensive audit logging
 - Password reset functionality
+- Unified layout system with consistent branding
 
 ---
 
@@ -92,6 +102,12 @@ Complete university inventory management system with:
 **User Management (Admin)**
 - ✅ User listing with search
 - ✅ Approve/reject pending users
+- ✅ **Bulk User Approval** (NEW)
+  - Multi-select pending users with checkboxes
+  - "Select All" functionality (only pending users)
+  - Bulk approve button with count display
+  - Single API call for batch operations
+  - Auto-refresh after approval
 - ✅ Assign roles (Admin, Incharge, Faculty, Staff, Student)
 - ✅ Activate/deactivate users
 - ✅ Delete users
@@ -102,6 +118,76 @@ Complete university inventory management system with:
 - ✅ Incharge dashboard
 - ✅ User dashboard (Faculty, Staff, Students)
 - ✅ Role-based navigation
+- ✅ **Single unified Header** (removed duplicate headers)
+
+---
+
+### ✅ Recent Enhancements: Advanced User Features (100%)
+
+**Department Browsing System**
+- ✅ **Browse Departments Page** (`/dashboard/user/browse`)
+  - Grid of department cards (ROBO, AI, META)
+  - Department-specific icons and colors
+  - Item count per department
+  - Accessible to Faculty, Staff, Students
+  - Session-aware redirects
+- ✅ **Department Items Page** (`/dashboard/user/browse/[departmentId]`)
+  - All items from selected department
+  - Category filter buttons
+  - Availability status badges
+  - "Request Item" button for available items
+  - Back navigation to departments list
+- ✅ **Role-Based Item Visibility**
+  - Faculty & Staff: See all items
+  - Students: Only see student-visible category items
+  - API-level filtering for security
+- ✅ **DepartmentCard Component**
+  - Reusable card with hover effects
+  - Department-specific icons
+  - Item count badge
+  - Responsive design
+
+**Role-Based Permissions System**
+- ✅ **Configurable Permission Settings** (Admin Settings page)
+  - Separate sections for Faculty, Staff, Students
+  - Each role has 3 configurable parameters:
+    - Max Borrow Days (1-365 days)
+    - Max Simultaneous Items (1-20 items)
+    - Requires Approval (toggle)
+- ✅ **Default Values**
+  - Faculty: 30 days, 5 items, no approval required
+  - Staff: 21 days, 3 items, approval required
+  - Students: 7 days, 2 items, approval required
+- ✅ **Database Integration**
+  - 9 new settings in database seed
+  - Settings API endpoints updated
+  - Real-time configuration changes
+- ✅ **Settings UI**
+  - Color-coded sections (blue=Faculty, green=Staff, purple=Students)
+  - Toggle switches for approval requirements
+  - Number inputs with validation
+  - Save/Reset functionality
+
+**Layout & Navigation Improvements**
+- ✅ **Unified Header System**
+  - Removed duplicate headers from Admin & Incharge dashboards
+  - All pages use single Header from `dashboard/layout.tsx`
+  - Consistent "WoU Inventory Management System" branding
+  - Clean, non-redundant UI
+- ✅ **Route Group Layouts**
+  - `(auth)` layout for authentication pages
+  - `dashboard` layout for all dashboard pages
+  - Consistent Header/Footer across sections
+- ✅ **Smart Redirects**
+  - Faculty/Staff/Students → `/dashboard/user/browse`
+  - Admin → `/dashboard/admin`
+  - Incharge → `/dashboard/incharge`
+  - Session-based auto-navigation
+
+**API Endpoints Created**
+- ✅ `POST /api/admin/users` - Bulk user approval
+- ✅ `GET /api/departments` - List all departments with counts
+- ✅ `GET /api/departments/[id]/items` - Department items (role-filtered)
 
 ---
 

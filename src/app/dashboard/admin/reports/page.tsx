@@ -123,26 +123,22 @@ export default function AdminReports() {
 
     return (
         <div className="min-h-screen bg-gradient-light">
-            {/* Header */}
-            <header className="bg-white border-b border-secondary-200 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-secondary-800">Reports & Analytics</h1>
-                            <p className="text-sm text-secondary-600 mt-1">Generate and download inventory reports</p>
-                        </div>
-                        <button
-                            onClick={() => router.back()}
-                            className="px-4 py-2 bg-secondary-100 hover:bg-secondary-200 text-secondary-700 rounded-lg text-sm font-medium transition-colors"
-                        >
-                            ← Back
-                        </button>
-                    </div>
-                </div>
-            </header>
-
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Page Header */}
+                <div className="mb-6 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-secondary-800">Reports & Analytics</h1>
+                        <p className="text-sm text-secondary-600 mt-1">Generate and download inventory reports</p>
+                    </div>
+                    <button
+                        onClick={() => router.back()}
+                        className="px-4 py-2 bg-white hover:bg-secondary-50 text-secondary-700 border border-secondary-300 rounded-lg text-sm font-medium transition-colors"
+                    >
+                        ← Back
+                    </button>
+                </div>
+
                 <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
                     {/* Report Type Selection */}
                     <div className="mb-8">
@@ -151,8 +147,8 @@ export default function AdminReports() {
                             <button
                                 onClick={() => setReportType('inventory')}
                                 className={`p-4 border-2 rounded-lg transition-all ${reportType === 'inventory'
-                                        ? 'border-primary-500 bg-primary-50'
-                                        : 'border-secondary-200 hover:border-primary-300'
+                                    ? 'border-primary-500 bg-primary-50'
+                                    : 'border-secondary-200 hover:border-primary-300'
                                     }`}
                             >
                                 <div className="flex items-center">
@@ -169,8 +165,8 @@ export default function AdminReports() {
                             <button
                                 onClick={() => setReportType('issues')}
                                 className={`p-4 border-2 rounded-lg transition-all ${reportType === 'issues'
-                                        ? 'border-primary-500 bg-primary-50'
-                                        : 'border-secondary-200 hover:border-primary-300'
+                                    ? 'border-primary-500 bg-primary-50'
+                                    : 'border-secondary-200 hover:border-primary-300'
                                     }`}
                             >
                                 <div className="flex items-center">
@@ -187,8 +183,8 @@ export default function AdminReports() {
                             <button
                                 onClick={() => setReportType('overdue')}
                                 className={`p-4 border-2 rounded-lg transition-all ${reportType === 'overdue'
-                                        ? 'border-primary-500 bg-primary-50'
-                                        : 'border-secondary-200 hover:border-primary-300'
+                                    ? 'border-primary-500 bg-primary-50'
+                                    : 'border-secondary-200 hover:border-primary-300'
                                     }`}
                             >
                                 <div className="flex items-center">

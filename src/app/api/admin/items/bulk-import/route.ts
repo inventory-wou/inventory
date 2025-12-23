@@ -63,13 +63,31 @@ export async function POST(request: NextRequest) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // Parse file
+        // Parse file and extract images
         let rows;
+        let extractedImages = 0;
         try {
             if (isCSV) {
                 rows = parseCSV(buffer);
+                // Check if there are any image references that need extraction
+                // (Future: Could support ZIP files with CSV + images)
             } else {
+                // Excel file - parse data
                 rows = parseExcel(buffer);
+
+                // Extract embedded images from Excel
+                try {
+                    const { extractExcelImages, applyExcelImages } = await import('@/lib/image-extraction');
+                    const imageMap = await extractExcelImages(buffer);
+
+                    if (imageMap.size > 0) {
+                        rows = applyExcelImages(rows, imageMap);
+                        extractedImages = imageMap.size;
+                    }
+                } catch (imageError) {
+                    console.error('Image extraction failed:', imageError);
+                    // Continue without images - don't fail the entire import
+                }
             }
         } catch (error) {
             return NextResponse.json(
@@ -106,6 +124,7 @@ export async function POST(request: NextRequest) {
                 validRows: result.imported,
                 invalidRows: result.failed,
                 errors: result.errors,
+                extractedImages,
             });
         }
 
@@ -118,9 +137,10 @@ export async function POST(request: NextRequest) {
             failed: result.failed,
             totalRows: rows.length,
             errors: result.errors,
+            extractedImages,
             message: result.success
-                ? `Successfully imported ${result.imported} items`
-                : `Imported ${result.imported} items, ${result.failed} failed`,
+                ? `Successfully imported ${result.imported} items${extractedImages > 0 ? ` (${extractedImages} images auto-extracted)` : ''}`
+                : `Imported ${result.imported} items, ${result.failed} failed${extractedImages > 0 ? ` (${extractedImages} images extracted)` : ''}`,
         });
     } catch (error) {
         console.error('Bulk import error:', error);

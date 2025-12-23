@@ -1,7 +1,7 @@
 import { parse } from 'csv-parse/sync';
 import * as XLSX from 'xlsx';
 import { prisma } from './prisma';
-import { generateManualId } from './utils';
+import { generateManualId, generateSerialNumber } from './utils';
 
 export interface ImportRow {
     name: string;
@@ -265,6 +265,11 @@ export async function bulkCreateItems(
             // Generate manual ID
             const manualId = await generateManualId(department.code);
 
+            // Generate serial number if not provided
+            const serialNumber = row.serialNumber && row.serialNumber.trim() !== ''
+                ? row.serialNumber
+                : await generateSerialNumber(department.code);
+
             // Parse boolean
             const isConsumable = row.isConsumable?.toLowerCase() === 'true' ||
                 row.isConsumable?.toLowerCase() === 'yes' ||
@@ -277,7 +282,7 @@ export async function bulkCreateItems(
                     manualId,
                     description: row.description || null,
                     specifications: row.specifications || null,
-                    serialNumber: row.serialNumber || null,
+                    serialNumber,
                     departmentId: department.id,
                     categoryId: category.id,
                     condition: (row.condition?.toUpperCase() as any) || 'GOOD',

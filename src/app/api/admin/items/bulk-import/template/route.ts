@@ -13,11 +13,10 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const format = searchParams.get('format') || 'csv';
 
-        // Define template headers
+        // Define template headers (removed serialNumber - auto-generated)
         const headers = [
             'name',
             'description',
-            'serialNumber',
             'departmentCode',
             'categoryName',
             'status',
@@ -38,7 +37,6 @@ export async function GET(request: Request) {
         const exampleRow = [
             'Arduino Uno R3',
             'Microcontroller board based on ATmega328P',
-            'ARD-001',
             'ROBO',
             'Microcontrollers',
             'AVAILABLE',

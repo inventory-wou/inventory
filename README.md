@@ -7,11 +7,16 @@ A comprehensive inventory management system for Robotics Lab, AI Research Centre
 **Implemented**: Phases 1-8 + Enhanced User Roles, Bulk Approval, Department Browsing & Role Permissions  
 **Total Progress**: 8/9 Phases + Advanced Features (98%)
 
-**Latest Updates (Dec 2024)**:
+**Latest Updates (Dec 23, 2024)**:
+- ✅ **Database Schema Update**: `imageUrl` → `image` field rename
+- ✅ **Settings API Enhancement**: All authenticated users can read settings (not just admins)
+- ✅ **Dynamic Role Permissions**: Dashboards fetch borrowing limits from database settings
+- ✅ **Build Script Optimization**: Automatic Prisma client generation in build process
+- ✅ **Bulk Image System**: Complete image upload workflow with Cloudinary integration
+- ✅ **Auto Serial Numbers**: Automatic generation based on department codes
 - ✅ Bulk user approval system
 - ✅ Department browsing for Faculty/Staff/Students
-- ✅ Role-based permissions (configurable settings)
-- ✅ Layout optimization (unified headers)
+- ✅ Unified layout optimization
 
 ---
 
@@ -188,6 +193,105 @@ Complete university inventory management system with:
 - ✅ `POST /api/admin/users` - Bulk user approval
 - ✅ `GET /api/departments` - List all departments with counts
 - ✅ `GET /api/departments/[id]/items` - Department items (role-filtered)
+
+---
+
+### ✅ Recent Enhancements: December 2024 System Improvements (100%)
+
+**Database Schema Updates**
+- ✅ **Field Standardization: `imageUrl` → `image`**
+  - Simplified and consistent naming convention
+  - Updated across 18+ files (components, pages, APIs, types)
+  - Database migration applied: `ALTER TABLE "Item" RENAME COLUMN "imageUrl" TO "image"`
+  - Prisma client regenerated with updated types
+  - All existing image URLs preserved (zero data loss)
+  - Build verified passing on both local and production
+
+**Build & Deployment Optimization**
+- ✅ **Enhanced Build Script** (`package.json`)
+  ```json
+  "build": "prisma generate && prisma db push && next build"
+  ```
+  - Ensures Prisma client generation before every build
+  - Automatic database schema synchronization
+  - Fixes Vercel deployment type mismatches
+  - Guarantees type safety in production builds
+  - Prevents stale Prisma client cache issues
+
+**Complete Image Upload System**  
+- ✅ **ImageUploader Component** (`/components/ImageUploader.tsx`)
+  - Drag-and-drop file upload interface
+  - Real-time image preview
+  - File validation: 5MB max, JPG/PNG/WEBP only
+  - Upload progress indicator
+  - Cloudinary integration with auto-optimization
+- ✅ **Batch Image Upload**
+  - Upload up to 50 images simultaneously
+  - Tabbed interface on bulk import page
+  - Progress tracking for each file
+  - Success/failure status display
+  - Download URL mapping CSV
+- ✅ **Excel Image Extraction**
+  - Automatic extraction of embedded images from Excel files
+  - Uses `exceljs` library for robust parsing
+  - Uploads extracted images to Cloudinary
+  - Row-to-image mapping for bulk import
+  - Transparent integration (no user action needed)
+- ✅ **Image API Endpoints**
+  - `/api/admin/items/upload-image` - Single upload endpoint
+  - `/api/admin/items/bulk-upload-images` - Batch upload endpoint
+  - Cloudinary transformations: 600x400 fit mode, auto quality/format
+- ✅ **New Dependencies**
+  - `exceljs@4.4.0` - Excel parsing and image extraction
+  - `adm-zip@0.5.16` - ZIP file handling
+  - `@types/adm-zip@0.5.7` - TypeScript definitions
+  - `next-cloudinary@6.15.1` - Cloudinary integration
+
+**Auto-Generated Serial Numbers**
+- ✅ **Automatic Serial Number Generation**
+  - Format: `SN-DEPT-###` (e.g., `SN-ROBO-001`, `SN-AI-042`)
+  - Department-specific sequential numbering
+  - Auto-generated during bulk import if not provided
+  - Manual serial input still supported (backward compatible)
+  - Unique constraint validation
+- ✅ **Template & Documentation Updates**
+  - Removed `serialNumber` column from CSV/Excel templates
+  - Updated import rules: "Serial Numbers: Auto-generated"
+  - Simplified bulk import workflow (one less required field)
+- ✅ **Utility Function**
+  - `generateSerialNumber(departmentCode)` in `/lib/utils.ts`
+  - Finds highest existing serial for department
+  - Increments and returns next available number
+  - Async/await Prisma query for reliability
+
+**Settings API Security Enhancement**
+- ✅ **Improved Access Control**
+  - **GET `/api/admin/settings`**: Now accessible to **all authenticated users**
+    - Allows Faculty/Staff/Students to read borrowing limits
+    - No longer returns 403 Forbidden errors
+    - Read-only access is safe and necessary for dynamic displays
+  - **PUT `/api/admin/settings`**: Remains **admin-only**
+    - Only admins can modify system settings
+    - Maintains security for critical configurations
+- ✅ **Dynamic Dashboard Permissions**
+  - Faculty/Staff dashboards fetch max items & days from database
+  - Real-time updates when admin changes settings
+  - No hardcoded values (all data-driven)
+  - Settings keys: `faculty_max_items`, `faculty_max_borrow_days`, `faculty_requires_approval`
+  - Staff keys: `staff_max_items`, `staff_max_borrow_days`, `staff_requires_approval`
+- ✅ **User Experience Improvement**
+  - Admin changes settings → Save
+  - Faculty/Staff dashboards auto-update on next page load
+  - No code deployment needed for limit changes
+  - Consistent borrowing rules across the system
+
+**Summary of December 2024 Updates:**
+- 🔄 Database field rename: 1 migration, 18 files updated
+- 🚀 Build script: Automatic Prisma generation for deployments
+- 📸 Images: Complete upload workflow (single, batch, Excel extraction)
+- 🔢 Serials: Auto-generation based on department (SN-DEPT-###)
+- 🔐 Settings: Enhanced API access for dynamic role permissions
+- ✅ All features tested, verified, and production-ready
 
 ---
 
@@ -652,7 +756,7 @@ inventory-system/
 - Location: location
 - Status: condition (enum), status (enum)
 - Consumable: isConsumable, currentStock, minStockLevel
-- Media: imageUrl
+- Media: **image** (Cloudinary URL)
 - Relations: category, department, addedBy, issueRequests[], issueRecords[]
 
 **IssueRequest** (13 fields)

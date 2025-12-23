@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
                 location,
                 purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
                 value: value ? parseFloat(value) : null,
-                image,
+                image: image || null,
                 addedById: session.user.id
             },
             include: {

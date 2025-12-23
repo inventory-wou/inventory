@@ -8,6 +8,9 @@ interface IssuedItem {
     expectedReturnDate: string;
     isOverdue: boolean;
     daysOverdue: number;
+    isReturnable: boolean;
+    projectName?: string;
+    projectIncharge?: string;
     user: {
         name: string;
         email: string;
@@ -30,8 +33,10 @@ interface IssuedItem {
 
 export default function InchargeReturnPage() {
     const [issuedItems, setIssuedItems] = useState<IssuedItem[]>([]);
+    const [allItems, setAllItems] = useState<IssuedItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [typeFilter, setTypeFilter] = useState<'all' | 'temporary' | 'permanent'>('all');
     const [selectedRecord, setSelectedRecord] = useState<IssuedItem | null>(null);
     const [returnCondition, setReturnCondition] = useState('GOOD');
     const [damageRemarks, setDamageRemarks] = useState('');
@@ -44,6 +49,11 @@ export default function InchargeReturnPage() {
         fetchIssuedItems();
     }, [search]);
 
+    useEffect(() => {
+        // Apply filter when typeFilter changes
+        applyFilter();
+    }, [typeFilter, allItems]);
+
     const fetchIssuedItems = async () => {
         setLoading(true);
         try {
@@ -51,12 +61,27 @@ export default function InchargeReturnPage() {
             const response = await fetch(`/api/incharge/return${params}`);
             if (response.ok) {
                 const data = await response.json();
-                setIssuedItems(data);
+                setAllItems(data);
+                applyFilterToData(data, typeFilter);
             }
         } catch (error) {
             console.error('Error fetching issued items:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const applyFilter = () => {
+        applyFilterToData(allItems, typeFilter);
+    };
+
+    const applyFilterToData = (data: IssuedItem[], filter: string) => {
+        if (filter === 'temporary') {
+            setIssuedItems(data.filter(item => item.isReturnable));
+        } else if (filter === 'permanent') {
+            setIssuedItems(data.filter(item => !item.isReturnable));
+        } else {
+            setIssuedItems(data);
         }
     };
 
@@ -132,15 +157,30 @@ export default function InchargeReturnPage() {
                     <p className="text-gray-600 mt-2">Process returns for issued items</p>
                 </div>
 
-                {/* Search */}
+                {/* Search and Filter */}
                 <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-                    <input
-                        type="text"
-                        placeholder="Search by user name or item name..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full px-4 py-2 border rounded-lg"
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="md:col-span-2">
+                            <input
+                                type="text"
+                                placeholder="Search by user name or item name..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full px-4 py-2 border rounded-lg"
+                            />
+                        </div>
+                        <div>
+                            <select
+                                value={typeFilter}
+                                onChange={(e) => setTypeFilter(e.target.value as any)}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="all">All Issuances</option>
+                                <option value="temporary">Temporary (Returnable)</option>
+                                <option value="permanent">Permanent (Non-Returnable)</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Issued Items */}
@@ -165,20 +205,41 @@ export default function InchargeReturnPage() {
                                                 <h3 className="font-bold text-lg">{record.item.name}</h3>
                                                 <p className="text-sm text-gray-600">{record.item.manualId}</p>
                                             </div>
-                                            {isOverdue ? (
-                                                <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">
-                                                    OVERDUE ({record.daysOverdue} days)
-                                                </span>
-                                            ) : daysRemaining <= 3 ? (
-                                                <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">
-                                                    Due Soon ({daysRemaining} days)
-                                                </span>
-                                            ) : (
-                                                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
-                                                    On Time
-                                                </span>
-                                            )}
+                                            <div className="flex gap-2">
+                                                {!record.isReturnable ? (
+                                                    <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-semibold">
+                                                        Permanent
+                                                    </span>
+                                                ) : isOverdue ? (
+                                                    <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">
+                                                        OVERDUE ({record.daysOverdue} days)
+                                                    </span>
+                                                ) : daysRemaining <= 3 ? (
+                                                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">
+                                                        Due Soon ({daysRemaining} days)
+                                                    </span>
+                                                ) : (
+                                                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
+                                                        On Time
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
+
+                                        {!record.isReturnable && record.projectName && (
+                                            <div className="bg-purple-50 border-l-4 border-purple-500 p-3 mb-3">
+                                                <p className="text-sm font-semibold text-purple-900">Project Allocation</p>
+                                                <p className="text-sm text-purple-800 mt-1">
+                                                    <strong>Project:</strong> {record.projectName}
+                                                </p>
+                                                <p className="text-sm text-purple-800">
+                                                    <strong>Incharge:</strong> {record.projectIncharge}
+                                                </p>
+                                                <p className="text-xs text-purple-700 mt-1">
+                                                    This item is permanently allocated and does not require return
+                                                </p>
+                                            </div>
+                                        )}
 
                                         <div className="grid grid-cols-3 gap-4 text-sm mb-4">
                                             <div>
@@ -191,7 +252,7 @@ export default function InchargeReturnPage() {
                                                 <p className="font-medium">{new Date(record.issueDate).toLocaleDateString()}</p>
                                             </div>
                                             <div>
-                                                <span className="text-gray-600">Expected Return:</span>
+                                                <span className="text-gray-600">{record.isReturnable ? 'Expected Return:' : 'Allocated On:'}</span>
                                                 <p className={`font-medium ${isOverdue ? 'text-red-600' : ''}`}>
                                                     {new Date(record.expectedReturnDate).toLocaleDateString()}
                                                 </p>

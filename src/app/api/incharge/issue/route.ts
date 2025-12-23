@@ -29,13 +29,23 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { requestId } = body;
+        const { requestId, isReturnable = true, projectName } = body;
 
         if (!requestId) {
             return NextResponse.json(
                 { error: 'Request ID is required' },
                 { status: 400 }
             );
+        }
+
+        // Validate non-returnable items requirements
+        if (!isReturnable) {
+            if (!projectName) {
+                return NextResponse.json(
+                    { error: 'Project Name is required for non-returnable items' },
+                    { status: 400 }
+                );
+            }
         }
 
         // Get the request
@@ -115,6 +125,9 @@ export async function POST(request: NextRequest) {
                     issuedBy: user.id,
                     issueDate: new Date(),
                     expectedReturnDate: expectedReturnDate,
+                    isReturnable: isReturnable,
+                    projectName: isReturnable ? null : projectName,
+                    projectIncharge: isReturnable ? null : issueRequest.user.name,
                 },
                 include: {
                     item: true,

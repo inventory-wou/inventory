@@ -12,30 +12,33 @@ datasource db {
 
 // User model with role-based access
 model User {
-  id            String   @id @default(cuid())
-  name          String
-  email         String   @unique
-  password      String?
-  role          UserRole @default(STUDENT)
-  phone         String?
-  studentId     String?  @unique
-  employeeId    String?  @unique
-  department    String?
-  isApproved    Boolean  @default(false)
-  isActive      Boolean  @default(true)
-  isBanned      Boolean  @default(false)
-  bannedUntil   DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  resetToken    String?
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  password         String?
+  role             UserRole  @default(STUDENT)
+  phone            String?
+  studentId        String?   @unique
+  employeeId       String?   @unique
+  department       String?
+  isApproved       Boolean   @default(false)
+  isActive         Boolean   @default(true)
+  isBanned         Boolean   @default(false)
+  bannedUntil      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  resetToken       String?
   resetTokenExpiry DateTime?
 
   // Relations
-  departments        Department[]
-  issueRequests      IssueRequest[]
-  issueRecords       IssueRecord[]
-  auditLogs          AuditLog[]
-  addedItems         Item[]               @relation("AddedBy")
+  departments       Department[]
+  issueRequests     IssueRequest[]
+  issueRecords      IssueRecord[]
+  auditLogs         AuditLog[]
+  addedItems        Item[]            @relation("AddedBy")
+  transferRequests  TransferRequest[] @relation("TransferRequestedBy")
+  transferApprovals TransferRequest[] @relation("TransferApprovedBy")
+  transferRecords   TransferRecord[]
 
   @@index([email])
   @@index([role])
@@ -44,6 +47,7 @@ model User {
 enum UserRole {
   ADMIN
   INCHARGE
+  PROCUREMENT
   FACULTY
   STAFF
   STUDENT
@@ -64,26 +68,30 @@ model Department {
   updatedAt    DateTime @updatedAt
 
   // Relations
-  incharge     User?    @relation(fields: [inchargeId], references: [id])
-  items        Item[]
-  issueRecords IssueRecord[]
+  incharge      User?                  @relation(fields: [inchargeId], references: [id])
+  items         Item[]
+  issueRecords  IssueRecord[]
+  itemAccess    ItemDepartmentAccess[]
+  transfersFrom TransferRequest[]      @relation("TransferFrom")
+  transfersTo   TransferRequest[]      @relation("TransferTo")
+  recordsFrom   TransferRecord[]       @relation("RecordTransferFrom")
+  recordsTo     TransferRecord[]       @relation("RecordTransferTo")
 
   @@index([name])
   @@index([code])
 }
 
-
 // Category model
 model Category {
-  id                 String  @id @default(cuid())
-  name               String  @unique
-  description        String?
-  maxBorrowDuration  Int     @default(7) // in days
-  requiresApproval   Boolean @default(false)
-  visibleToStudents  Boolean @default(true)
-  visibleToStaff     Boolean @default(true)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                String   @id @default(cuid())
+  name              String   @unique
+  description       String?
+  maxBorrowDuration Int      @default(7) // in days
+  requiresApproval  Boolean  @default(false)
+  visibleToStudents Boolean  @default(true)
+  visibleToStaff    Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   // Relations
   items Item[]
@@ -93,33 +101,37 @@ model Category {
 
 // Item model
 model Item {
-  id             String      @id @default(cuid())
-  manualId       String      @unique // e.g., ROB-001, AI-025
-  name           String
-  serialNumber   String?
-  categoryId     String
-  departmentId   String
-  description    String?
-  specifications String?
-  image          String?
-  condition      ItemCondition @default(GOOD)
-  status         ItemStatus    @default(AVAILABLE)
-  isConsumable   Boolean       @default(false)
-  currentStock   Int?
-  minStockLevel  Int?
-  location       String?
-  purchaseDate   DateTime?
-  value          Float?
-  addedById      String
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                 String        @id @default(cuid())
+  manualId           String        @unique // e.g., ROB-001, AI-025
+  name               String
+  serialNumber       String?
+  categoryId         String
+  departmentId       String
+  description        String?
+  specifications     String?
+  image              String?
+  condition          ItemCondition @default(GOOD)
+  status             ItemStatus    @default(AVAILABLE)
+  isConsumable       Boolean       @default(false)
+  currentStock       Int?
+  minStockLevel      Int?
+  location           String?
+  purchaseDate       DateTime?
+  value              Float?
+  addedById          String
+  sourceDepartmentId String? // For tracking if item was transferred from another dept
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   // Relations
-  category       Category        @relation(fields: [categoryId], references: [id])
-  department     Department      @relation(fields: [departmentId], references: [id])
-  addedBy        User            @relation("AddedBy", fields: [addedById], references: [id])
-  issueRequests  IssueRequest[]
-  issueRecords   IssueRecord[]
+  category         Category               @relation(fields: [categoryId], references: [id])
+  department       Department             @relation(fields: [departmentId], references: [id])
+  addedBy          User                   @relation("AddedBy", fields: [addedById], references: [id])
+  issueRequests    IssueRequest[]
+  issueRecords     IssueRecord[]
+  departmentAccess ItemDepartmentAccess[]
+  transferRequests TransferRequest[]
+  transferRecords  TransferRecord[]
 
   @@index([manualId])
   @@index([departmentId])
@@ -144,22 +156,22 @@ enum ItemStatus {
 
 // Issue Request model
 model IssueRequest {
-  id             String        @id @default(cuid())
-  userId         String
-  itemId         String
-  purpose        String
-  requestedDays  Int
-  requestDate    DateTime      @default(now())
-  status         RequestStatus @default(PENDING)
-  approvedBy     String?
-  approvalDate   DateTime?
+  id              String        @id @default(cuid())
+  userId          String
+  itemId          String
+  purpose         String
+  requestedDays   Int
+  requestDate     DateTime      @default(now())
+  status          RequestStatus @default(PENDING)
+  approvedBy      String?
+  approvalDate    DateTime?
   rejectionReason String?
-  remarks        String?
+  remarks         String?
 
   // Relations
-  user         User          @relation(fields: [userId], references: [id])
-  item         Item          @relation(fields: [itemId], references: [id])
-  issueRecord  IssueRecord?
+  user        User         @relation(fields: [userId], references: [id])
+  item        Item         @relation(fields: [itemId], references: [id])
+  issueRecord IssueRecord?
 
   @@index([userId])
   @@index([itemId])
@@ -175,24 +187,29 @@ enum RequestStatus {
 
 // Issue Record model
 model IssueRecord {
-  id                 String    @id @default(cuid())
-  requestId          String    @unique
-  itemId             String
-  userId             String
-  departmentId       String
-  issuedBy           String
-  issueDate          DateTime  @default(now())
-  expectedReturnDate DateTime
-  actualReturnDate   DateTime?
-  returnCondition    ItemCondition?
-  damageRemarks      String?
-  lateFee            Float?
-  isPendingReplacement Boolean @default(false)
-  
+  id                   String         @id @default(cuid())
+  requestId            String         @unique
+  itemId               String
+  userId               String
+  departmentId         String
+  issuedBy             String
+  issueDate            DateTime       @default(now())
+  expectedReturnDate   DateTime
+  actualReturnDate     DateTime?
+  returnCondition      ItemCondition?
+  damageRemarks        String?
+  lateFee              Float?
+  isPendingReplacement Boolean        @default(false)
+
+  // Non-returnable/Project tracking
+  isReturnable    Boolean @default(true)
+  projectName     String?
+  projectIncharge String?
+
   // Email reminder tracking
-  reminder3DaysSent  Boolean   @default(false)
-  reminder1DaySent   Boolean   @default(false)
-  overdueSent        Boolean   @default(false)
+  reminder3DaysSent Boolean @default(false)
+  reminder1DaySent  Boolean @default(false)
+  overdueSent       Boolean @default(false)
 
   // Relations
   request    IssueRequest @relation(fields: [requestId], references: [id])
@@ -227,11 +244,91 @@ model AuditLog {
 
 // Settings model for configurable business rules
 model Settings {
-  id                      String   @id @default(cuid())
-  key                     String   @unique
-  value                   String
-  description             String?
-  updatedAt               DateTime @updatedAt
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
 
   @@index([key])
+}
+
+// Item Department Access - defines which departments can access/view specific items
+model ItemDepartmentAccess {
+  id           String   @id @default(cuid())
+  itemId       String
+  departmentId String
+  canTransfer  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  item       Item       @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, departmentId])
+  @@index([itemId])
+  @@index([departmentId])
+}
+
+// Transfer Request - request to transfer item from one department to another
+model TransferRequest {
+  id               String         @id @default(cuid())
+  itemId           String
+  fromDepartmentId String
+  toDepartmentId   String
+  requestedById    String
+  quantity         Int            @default(1)
+  purpose          String
+  status           TransferStatus @default(PENDING)
+  approvedById     String?
+  approvalDate     DateTime?
+  rejectionReason  String?
+  requestDate      DateTime       @default(now())
+
+  // Relations
+  item           Item            @relation(fields: [itemId], references: [id])
+  fromDepartment Department      @relation("TransferFrom", fields: [fromDepartmentId], references: [id])
+  toDepartment   Department      @relation("TransferTo", fields: [toDepartmentId], references: [id])
+  requestedBy    User            @relation("TransferRequestedBy", fields: [requestedById], references: [id])
+  approvedBy     User?           @relation("TransferApprovedBy", fields: [approvedById], references: [id])
+  transferRecord TransferRecord?
+
+  @@index([fromDepartmentId])
+  @@index([toDepartmentId])
+  @@index([status])
+  @@index([itemId])
+}
+
+enum TransferStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+// Transfer Record - actual transfer completion record
+model TransferRecord {
+  id               String   @id @default(cuid())
+  requestId        String   @unique
+  itemId           String
+  fromDepartmentId String
+  toDepartmentId   String
+  transferredById  String
+  transferDate     DateTime @default(now())
+  quantity         Int      @default(1)
+  notes            String?
+
+  // Relations
+  request        TransferRequest @relation(fields: [requestId], references: [id])
+  item           Item            @relation(fields: [itemId], references: [id])
+  fromDepartment Department      @relation("RecordTransferFrom", fields: [fromDepartmentId], references: [id])
+  toDepartment   Department      @relation("RecordTransferTo", fields: [toDepartmentId], references: [id])
+  transferredBy  User            @relation(fields: [transferredById], references: [id])
+
+  @@index([itemId])
+  @@index([fromDepartmentId])
+  @@index([toDepartmentId])
+  @@index([requestId])
 }

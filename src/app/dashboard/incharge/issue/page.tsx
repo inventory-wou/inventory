@@ -32,6 +32,10 @@ export default function InchargeIssuePage() {
     const [showModal, setShowModal] = useState(false);
     const [issuing, setIssuing] = useState(false);
 
+    // Non-returnable fields
+    const [isReturnable, setIsReturnable] = useState(true);
+    const [projectName, setProjectName] = useState('');
+
     useEffect(() => {
         document.title = 'Issue Items | Multigyan';
         fetchApprovedRequests();
@@ -55,23 +59,37 @@ export default function InchargeIssuePage() {
 
     const openIssueModal = (request: ApprovedRequest) => {
         setSelectedRequest(request);
+        setIsReturnable(true);
+        setProjectName('');
         setShowModal(true);
     };
 
     const handleIssue = async () => {
         if (!selectedRequest) return;
 
+        // Validate non-returnable requirements
+        if (!isReturnable && !projectName.trim()) {
+            alert('Project Name is required for non-returnable items');
+            return;
+        }
+
         setIssuing(true);
         try {
             const response = await fetch('/api/incharge/issue', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ requestId: selectedRequest.id }),
+                body: JSON.stringify({
+                    requestId: selectedRequest.id,
+                    isReturnable,
+                    projectName: isReturnable ? null : projectName.trim(),
+                }),
             });
 
             if (response.ok) {
                 alert('Item issued successfully!');
                 setShowModal(false);
+                setIsReturnable(true);
+                setProjectName('');
                 fetchApprovedRequests();
             } else {
                 const data = await response.json();
@@ -177,10 +195,10 @@ export default function InchargeIssuePage() {
             {/* Issue Confirmation Modal */}
             {showModal && selectedRequest && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                    <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
                         <h2 className="text-2xl font-bold mb-4">Confirm Item Issuance</h2>
 
-                        <div className="mb-6 space-y-3">
+                        <div className="mb-6 space-y-4">
                             <div>
                                 <span className="text-sm text-gray-600">Item:</span>
                                 <p className="font-semibold">{selectedRequest.item.name}</p>
@@ -195,12 +213,81 @@ export default function InchargeIssuePage() {
                                 <span className="text-sm text-gray-600">Duration:</span>
                                 <p className="font-semibold">{selectedRequest.requestedDays} days</p>
                             </div>
-                            <div className="bg-blue-50 p-3 rounded">
-                                <span className="text-sm text-gray-600">Expected Return Date:</span>
-                                <p className="font-bold text-blue-800">
-                                    {calculateExpectedReturn(selectedRequest.requestedDays)}
-                                </p>
+
+                            <div className="border-t pt-4">
+                                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                    Item Return Type
+                                </label>
+                                <div className="space-y-2">
+                                    <label className="flex items-center space-x-3 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            checked={isReturnable}
+                                            onChange={() => setIsReturnable(true)}
+                                            className="w-4 h-4 text-blue-600"
+                                        />
+                                        <span className="text-sm">Returnable (Temporary)</span>
+                                    </label>
+                                    <label className="flex items-center space-x-3 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            checked={!isReturnable}
+                                            onChange={() => setIsReturnable(false)}
+                                            className="w-4 h-4 text-blue-600"
+                                        />
+                                        <span className="text-sm">Non-Returnable (Project-based)</span>
+                                    </label>
+                                </div>
                             </div>
+
+                            {!isReturnable && (
+                                <div className="bg-yellow-50 p-4 rounded-lg space-y-3 border border-yellow-200">
+                                    <div className="flex items-start gap-2">
+                                        <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        <p className="text-sm text-yellow-800">
+                                            This item will be permanently allocated to {selectedRequest.user.name}'s project and will not require return.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Project Name <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={projectName}
+                                            onChange={(e) => setProjectName(e.target.value)}
+                                            placeholder="e.g., AI Research - Neural Networks"
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Project Incharge
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={selectedRequest.user.name}
+                                            disabled
+                                            className="w-full px-3 py-2 border rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">Auto-populated from requesting user</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {isReturnable && (
+                                <div className="bg-blue-50 p-3 rounded">
+                                    <span className="text-sm text-gray-600">Expected Return Date:</span>
+                                    <p className="font-bold text-blue-800">
+                                        {calculateExpectedReturn(selectedRequest.requestedDays)}
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex gap-3">

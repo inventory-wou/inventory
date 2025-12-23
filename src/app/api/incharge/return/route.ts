@@ -294,10 +294,11 @@ export async function GET(request: NextRequest) {
                 ? undefined
                 : user.departments.map((dept: { id: string }) => dept.id);
 
-        // Get issued items that haven't been returned
+        // Get issued items that haven't been returned and are returnable
         const issueRecords = await prisma.issueRecord.findMany({
             where: {
                 actualReturnDate: null, // Not yet returned
+                isReturnable: true, // Only returnable items
                 ...(departmentIds && {
                     departmentId: { in: departmentIds },
                 }),

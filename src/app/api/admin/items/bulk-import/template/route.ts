@@ -68,17 +68,31 @@ export async function GET(request: Request) {
                 }
             });
         } else if (format === 'excel') {
-            // For Excel, we'll create a simple CSV format that Excel can open
-            // In a production app, you'd use a library like exceljs
-            const csvContent = [
-                headers.join(','),
-                exampleRow.map(val => `"${val}"`).join(',')
-            ].join('\n');
+            // Generate proper Excel file using xlsx library
+            const XLSX = require('xlsx');
 
-            return new NextResponse(csvContent, {
+            // Create workbook and worksheet
+            const workbook = XLSX.utils.book_new();
+
+            // Create data array with headers and example
+            const data = [
+                headers,
+                exampleRow
+            ];
+
+            // Convert to worksheet
+            const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Items');
+
+            // Generate Excel buffer
+            const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+            return new NextResponse(excelBuffer, {
                 status: 200,
                 headers: {
-                    'Content-Type': 'application/vnd.ms-excel',
+                    'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     'Content-Disposition': 'attachment; filename="items-import-template.xlsx"'
                 }
             });

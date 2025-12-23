@@ -13,8 +13,11 @@ export default async function Home() {
     // Redirect based on role
     if (session.user.role === 'ADMIN') redirect('/dashboard/admin');
     if (session.user.role === 'INCHARGE') redirect('/dashboard/incharge');
-    // Faculty, Staff, Students go to browse page
-    redirect('/dashboard/user/browse');
+    if (session.user.role === 'FACULTY') redirect('/dashboard/faculty');
+    if (session.user.role === 'STAFF') redirect('/dashboard/staff');
+    if (session.user.role === 'STUDENT') redirect('/dashboard/student');
+    // Fallback for any other role
+    redirect('/dashboard');
   }
 
   // Show public home page

@@ -15,7 +15,14 @@ export default function DashboardPage() {
                 router.push('/dashboard/admin');
             } else if (session.user.role === 'INCHARGE') {
                 router.push('/dashboard/incharge');
+            } else if (session.user.role === 'FACULTY') {
+                router.push('/dashboard/faculty');
+            } else if (session.user.role === 'STAFF') {
+                router.push('/dashboard/staff');
+            } else if (session.user.role === 'STUDENT') {
+                router.push('/dashboard/student');
             } else {
+                // Legacy 'USER' role (if any) goes to user dashboard
                 router.push('/dashboard/user');
             }
         }

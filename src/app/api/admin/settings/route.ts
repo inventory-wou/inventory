@@ -12,9 +12,10 @@ export async function GET() {
     try {
         const session = await getServerSession(authOptions);
 
-        if (!session || session.user.role !== 'ADMIN') {
+        // Allow all authenticated users to read settings
+        if (!session) {
             return NextResponse.json(
-                { error: 'Unauthorized. Admin access required.' },
+                { error: 'Unauthorized. Please sign in.' },
                 { status: 403 }
             );
         }

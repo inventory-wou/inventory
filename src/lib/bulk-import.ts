@@ -322,7 +322,7 @@ export async function bulkCreateItems(
 }
 
 /**
- * Generate CSV template with headers
+ * Generate CSV template with headers and sample data
  */
 export function generateCSVTemplate(): string {
     const headers = [
@@ -341,11 +341,87 @@ export function generateCSVTemplate(): string {
         'value',
     ];
 
-    return headers.join(',') + '\n';
+    // Sample data rows
+    const sampleRows = [
+        [
+            'Arduino Uno R3',
+            'Microcontroller board based on ATmega328P',
+            'Operating Voltage: 5V; Digital I/O Pins: 14',
+            'A000066',
+            'ROBO',
+            'Microcontrollers',
+            'NEW',
+            'FALSE',
+            '',
+            '',
+            'Lab-Room',
+            '2024-01-15',
+            '25'
+        ],
+        [
+            'Raspberry Pi 4',
+            'Single-board computer with 4GB RAM',
+            'Processor: Quad-core ARM Cortex-A72; RAM: 4GB LPDDR4',
+            'RPI4B-4GB',
+            'ROBO',
+            'Computers',
+            'NEW',
+            'FALSE',
+            '',
+            '',
+            'Storage Cabinet',
+            '2024-02-20',
+            '55'
+        ],
+        [
+            'Resistor Pack 100Ω',
+            'Pack of 100 resistors at 100Ω',
+            'Resistance: 100Ω; Tolerance: ±5%; Power: 0.25W',
+            '',
+            'ROBO',
+            'Electronic Components',
+            'NEW',
+            'TRUE',
+            '500',
+            '50',
+            'Electronics Lab',
+            '2024-01-10',
+            '5'
+        ],
+        [
+            'LED Pack Red 5mm',
+            'Pack of 50 red LEDs',
+            'Wavelength: 620-630nm; Forward Voltage: 2.0V',
+            '',
+            'ROBO',
+            'Electronic Components',
+            'NEW',
+            'TRUE',
+            '200',
+            '20',
+            'Electronics Lab',
+            '2024-01-10',
+            '3'
+        ]
+    ];
+
+    // Convert to CSV format
+    const csvRows = [
+        headers.join(','),
+        ...sampleRows.map(row => row.map(cell => {
+            // Quote cells that contain commas or special characters
+            if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
+                return `"${cell.replace(/"/g, '""')}"`;
+            }
+            return cell;
+        }).join(','))
+    ];
+
+    return csvRows.join('\n') + '\n';
 }
 
 /**
- * Generate Excel template with headers
+ * Generate Excel template with headers and sample data
  */
 export function generateExcelTemplate(): Buffer {
     const headers = [
@@ -364,7 +440,92 @@ export function generateExcelTemplate(): Buffer {
         'value',
     ];
 
-    const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+    // Sample data rows
+    const sampleData = [
+        [
+            'Arduino Uno R3',
+            'Microcontroller board based on ATmega328P',
+            'Operating Voltage: 5V; Digital I/O Pins: 14',
+            'A000066',
+            'ROBO',
+            'Microcontrollers',
+            'NEW',
+            'FALSE',
+            '',
+            '',
+            'Lab-Room',
+            '2024-01-15',
+            25
+        ],
+        [
+            'Raspberry Pi 4',
+            'Single-board computer with 4GB RAM',
+            'Processor: Quad-core ARM Cortex-A72; RAM: 4GB LPDDR4',
+            'RPI4B-4GB',
+            'ROBO',
+            'Computers',
+            'NEW',
+            'FALSE',
+            '',
+            '',
+            'Storage Cabinet',
+            '2024-02-20',
+            55
+        ],
+        [
+            'Resistor Pack 100Ω',
+            'Pack of 100 resistors at 100Ω',
+            'Resistance: 100Ω; Tolerance: ±5%; Power: 0.25W',
+            '',
+            'ROBO',
+            'Electronic Components',
+            'NEW',
+            'TRUE',
+            500,
+            50,
+            'Electronics Lab',
+            '2024-01-10',
+            5
+        ],
+        [
+            'LED Pack Red 5mm',
+            'Pack of 50 red LEDs',
+            'Wavelength: 620-630nm; Forward Voltage: 2.0V',
+            '',
+            'ROBO',
+            'Electronic Components',
+            'NEW',
+            'TRUE',
+            200,
+            20,
+            'Electronics Lab',
+            '2024-01-10',
+            3
+        ]
+    ];
+
+    // Combine headers and data
+    const worksheetData = [headers, ...sampleData];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+    // Set column widths for better readability
+    worksheet['!cols'] = [
+        { wch: 20 },  // name
+        { wch: 35 },  // description
+        { wch: 40 },  // specifications
+        { wch: 15 },  // serialNumber
+        { wch: 12 },  // department
+        { wch: 20 },  // category
+        { wch: 12 },  // condition
+        { wch: 12 },  // isConsumable
+        { wch: 12 },  // currentStock
+        { wch: 12 },  // minStockLevel
+        { wch: 15 },  // location
+        { wch: 12 },  // purchaseDate
+        { wch: 10 },  // value
+    ];
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Items');
 

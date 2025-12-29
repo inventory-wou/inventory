@@ -135,19 +135,6 @@ export default function AdminReports() {
 
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Page Header */}
-                <div className="mb-6 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-secondary-800">Reports & Analytics</h1>
-                        <p className="text-sm text-secondary-600 mt-1">Generate and download inventory reports</p>
-                    </div>
-                    <button
-                        onClick={() => router.back()}
-                        className="px-4 py-2 bg-white hover:bg-secondary-50 text-secondary-700 border border-secondary-300 rounded-lg text-sm font-medium transition-colors"
-                    >
-                        ← Back
-                    </button>
-                </div>
 
                 <div className="bg-white rounded-xl shadow-md p-6 border border-secondary-200">
                     {/* Report Type Selection */}

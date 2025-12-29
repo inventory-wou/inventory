@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import PageHeader from '@/components/common/PageHeader';
+import { Plus, ArrowRightLeft } from 'lucide-react';
 
 interface TransferRequest {
     id: string;
@@ -148,153 +150,155 @@ export default function TransferManagementPage() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Header */}
-            <div className="mb-8 flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Transfer Requests</h1>
-                    <p className="text-gray-600 mt-2">Manage inter-department item transfers</p>
+        <div className="min-h-screen bg-gray-50">
+            <PageHeader
+                title="Transfer Requests"
+                subtitle="Manage inter-department item transfers"
+                showBackButton
+                backButtonLabel="Back"
+                backUrl="/dashboard/incharge"
+                actions={[
+                    {
+                        label: 'Request Transfer',
+                        onClick: () => router.push('/dashboard/incharge/transfer/browse'),
+                        variant: 'primary',
+                        icon: Plus
+                    }
+                ]}
+            />
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+                {/* Filters */}
+                <div className="bg-white p-4 rounded-lg shadow-sm mb-6 flex gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Direction</label>
+                        <select
+                            value={filter}
+                            onChange={(e) => setFilter(e.target.value as any)}
+                            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="all">All Requests</option>
+                            <option value="incoming">Incoming (To Approve)</option>
+                            <option value="outgoing">Outgoing (My Requests)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="all">All Statuses</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="APPROVED">Approved</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="REJECTED">Rejected</option>
+                        </select>
+                    </div>
                 </div>
-                <button
-                    onClick={() => router.push('/dashboard/incharge/transfer/browse')}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Request Transfer
-                </button>
-            </div>
 
-            {/* Filters */}
-            <div className="bg-white p-4 rounded-lg shadow-sm mb-6 flex gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Direction</label>
-                    <select
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value as any)}
-                        className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option value="all">All Requests</option>
-                        <option value="incoming">Incoming (To Approve)</option>
-                        <option value="outgoing">Outgoing (My Requests)</option>
-                    </select>
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option value="all">All Statuses</option>
-                        <option value="PENDING">Pending</option>
-                        <option value="APPROVED">Approved</option>
-                        <option value="COMPLETED">Completed</option>
-                        <option value="REJECTED">Rejected</option>
-                    </select>
-                </div>
-            </div>
+                {/* Requests List */}
+                <div className="space-y-4">
+                    {requests.map((request) => (
+                        <div key={request.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="flex-1">
+                                    <h3 className="font-semibold text-lg text-gray-900">{request.item.name}</h3>
+                                    <p className="text-sm text-gray-600">{request.item.manualId} • {request.item.category.name}</p>
+                                </div>
+                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(request.status)}`}>
+                                    {request.status}
+                                </span>
+                            </div>
 
-            {/* Requests List */}
-            <div className="space-y-4">
-                {requests.map((request) => (
-                    <div key={request.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
-                                <h3 className="font-semibold text-lg text-gray-900">{request.item.name}</h3>
-                                <p className="text-sm text-gray-600">{request.item.manualId} • {request.item.category.name}</p>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
+                                <div>
+                                    <span className="text-gray-600">From:</span>
+                                    <p className="font-medium">{request.fromDepartment.name}</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">To:</span>
+                                    <p className="font-medium">{request.toDepartment.name}</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">Requested by:</span>
+                                    <p className="font-medium">{request.requestedBy.name}</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">Date:</span>
+                                    <p className="font-medium">{new Date(request.requestDate).toLocaleDateString()}</p>
+                                </div>
                             </div>
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(request.status)}`}>
-                                {request.status}
-                            </span>
-                        </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
-                            <div>
-                                <span className="text-gray-600">From:</span>
-                                <p className="font-medium">{request.fromDepartment.name}</p>
-                            </div>
-                            <div>
-                                <span className="text-gray-600">To:</span>
-                                <p className="font-medium">{request.toDepartment.name}</p>
-                            </div>
-                            <div>
-                                <span className="text-gray-600">Requested by:</span>
-                                <p className="font-medium">{request.requestedBy.name}</p>
-                            </div>
-                            <div>
-                                <span className="text-gray-600">Date:</span>
-                                <p className="font-medium">{new Date(request.requestDate).toLocaleDateString()}</p>
-                            </div>
-                        </div>
-
-                        {request.item.isConsumable && (
-                            <div className="bg-blue-50 p-3 rounded mb-4">
-                                <p className="text-sm text-blue-800">
-                                    <strong>Quantity:</strong> {request.quantity} units
-                                </p>
-                            </div>
-                        )}
-
-                        <div className="mb-4">
-                            <span className="text-sm text-gray-600">Purpose:</span>
-                            <p className="text-sm font-medium">{request.purpose}</p>
-                        </div>
-
-                        {request.rejectionReason && (
-                            <div className="bg-red-50 border-l-4 border-red-500 p-3 mb-4">
-                                <p className="text-sm text-red-800">
-                                    <strong>Rejection Reason:</strong> {request.rejectionReason}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Actions */}
-                        <div className="flex gap-2">
-                            {request.status === 'PENDING' && filter === 'incoming' && (
-                                <>
-                                    <button
-                                        onClick={() => handleApprove(request.id)}
-                                        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
-                                    >
-                                        Approve
-                                    </button>
-                                    <button
-                                        onClick={() => handleReject(request.id)}
-                                        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
-                                    >
-                                        Reject
-                                    </button>
-                                </>
-                            )}
-                            {request.status === 'APPROVED' && (
-                                <button
-                                    onClick={() => handleComplete(request.id)}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-                                >
-                                    Complete Transfer
-                                </button>
-                            )}
-                            {request.status === 'COMPLETED' && request.approvedBy && (
-                                <div className="text-sm text-gray-600">
-                                    Completed by {request.approvedBy.name}
+                            {request.item.isConsumable && (
+                                <div className="bg-blue-50 p-3 rounded mb-4">
+                                    <p className="text-sm text-blue-800">
+                                        <strong>Quantity:</strong> {request.quantity} units
+                                    </p>
                                 </div>
                             )}
-                        </div>
-                    </div>
-                ))}
-            </div>
 
-            {requests.length === 0 && (
-                <div className="text-center py-12">
-                    <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                    </svg>
-                    <p className="text-gray-600 text-lg">No transfer requests found</p>
-                    <p className="text-gray-500 text-sm mt-1">Request transfers from other departments to get started</p>
+                            <div className="mb-4">
+                                <span className="text-sm text-gray-600">Purpose:</span>
+                                <p className="text-sm font-medium">{request.purpose}</p>
+                            </div>
+
+                            {request.rejectionReason && (
+                                <div className="bg-red-50 border-l-4 border-red-500 p-3 mb-4">
+                                    <p className="text-sm text-red-800">
+                                        <strong>Rejection Reason:</strong> {request.rejectionReason}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Actions */}
+                            <div className="flex gap-2">
+                                {request.status === 'PENDING' && filter === 'incoming' && (
+                                    <>
+                                        <button
+                                            onClick={() => handleApprove(request.id)}
+                                            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                                        >
+                                            Approve
+                                        </button>
+                                        <button
+                                            onClick={() => handleReject(request.id)}
+                                            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                                        >
+                                            Reject
+                                        </button>
+                                    </>
+                                )}
+                                {request.status === 'APPROVED' && (
+                                    <button
+                                        onClick={() => handleComplete(request.id)}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                                    >
+                                        Complete Transfer
+                                    </button>
+                                )}
+                                {request.status === 'COMPLETED' && request.approvedBy && (
+                                    <div className="text-sm text-gray-600">
+                                        Completed by {request.approvedBy.name}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ))}
                 </div>
-            )}
+
+                {requests.length === 0 && (
+                    <div className="text-center py-12">
+                        <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        <p className="text-gray-600 text-lg">No transfer requests found</p>
+                        <p className="text-gray-500 text-sm mt-1">Request transfers from other departments to get started</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

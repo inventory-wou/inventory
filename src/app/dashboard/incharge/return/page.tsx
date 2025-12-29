@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import PageHeader from '@/components/common/PageHeader';
+import SearchBar from '@/components/common/SearchBar';
+import EmptyState from '@/components/common/EmptyState';
+import { PackageOpen } from 'lucide-react';
 
 interface IssuedItem {
     id: string;
@@ -150,23 +154,24 @@ export default function InchargeReturnPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
-            <div className="max-w-7xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-800">Return Items</h1>
-                    <p className="text-gray-600 mt-2">Process returns for issued items</p>
-                </div>
+        <div className="min-h-screen bg-gray-50">
+            <PageHeader
+                title="Return Items"
+                subtitle="Process returns for issued items"
+                showBackButton
+                backButtonLabel="Back"
+                backUrl="/dashboard/incharge"
+            />
 
+            <div className="max-w-7xl mx-auto p-8">
                 {/* Search and Filter */}
                 <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="md:col-span-2">
-                            <input
-                                type="text"
-                                placeholder="Search by user name or item name..."
+                            <SearchBar
                                 value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="w-full px-4 py-2 border rounded-lg"
+                                onChange={setSearch}
+                                placeholder="Search by user name or item name..."
                             />
                         </div>
                         <div>
@@ -281,7 +286,10 @@ export default function InchargeReturnPage() {
                 </div>
 
                 {issuedItems.length === 0 && (
-                    <div className="text-center py-12 text-gray-500">No items currently issued</div>
+                    <EmptyState
+                        icon={PackageOpen}
+                        title="No items currently issued"
+                    />
                 )}
             </div>
 

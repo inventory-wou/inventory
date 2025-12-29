@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import PageHeader from '@/components/common/PageHeader';
+import SearchBar from '@/components/common/SearchBar';
+import EmptyState from '@/components/common/EmptyState';
+import { PackageOpen } from 'lucide-react';
 
 interface ApprovedRequest {
     id: string;
@@ -113,21 +117,22 @@ export default function InchargeIssuePage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
-            <div className="max-w-7xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-800">Issue Items</h1>
-                    <p className="text-gray-600 mt-2">Issue approved items to users</p>
-                </div>
+        <div className="min-h-screen bg-gray-50">
+            <PageHeader
+                title="Issue Items"
+                subtitle="Issue approved items to users"
+                showBackButton
+                backButtonLabel="Back"
+                backUrl="/dashboard/incharge"
+            />
 
+            <div className="max-w-7xl mx-auto p-8">
                 {/* Search */}
                 <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-                    <input
-                        type="text"
-                        placeholder="Search by user name, item name, manual ID, or serial number..."
+                    <SearchBar
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full px-4 py-2 border rounded-lg"
+                        onChange={setSearch}
+                        placeholder="Search by user name, item name, manual ID, or serial number..."
                     />
                 </div>
 
@@ -186,129 +191,133 @@ export default function InchargeIssuePage() {
                 </div>
 
                 {requests.length === 0 && (
-                    <div className="text-center py-12 text-gray-500">
-                        No approved requests waiting to be issued
-                    </div>
+                    <EmptyState
+                        icon={PackageOpen}
+                        title="No approved requests waiting to be issued"
+                    />
                 )}
             </div>
 
+
             {/* Issue Confirmation Modal */}
-            {showModal && selectedRequest && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
-                        <h2 className="text-2xl font-bold mb-4">Confirm Item Issuance</h2>
+            {
+                showModal && selectedRequest && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+                            <h2 className="text-2xl font-bold mb-4">Confirm Item Issuance</h2>
 
-                        <div className="mb-6 space-y-4">
-                            <div>
-                                <span className="text-sm text-gray-600">Item:</span>
-                                <p className="font-semibold">{selectedRequest.item.name}</p>
-                                <p className="text-sm text-gray-600">{selectedRequest.item.manualId}</p>
-                            </div>
-                            <div>
-                                <span className="text-sm text-gray-600">Issuing to:</span>
-                                <p className="font-semibold">{selectedRequest.user.name}</p>
-                                <p className="text-sm text-gray-600">{selectedRequest.user.email}</p>
-                            </div>
-                            <div>
-                                <span className="text-sm text-gray-600">Duration:</span>
-                                <p className="font-semibold">{selectedRequest.requestedDays} days</p>
-                            </div>
-
-                            <div className="border-t pt-4">
-                                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                                    Item Return Type
-                                </label>
-                                <div className="space-y-2">
-                                    <label className="flex items-center space-x-3 cursor-pointer">
-                                        <input
-                                            type="radio"
-                                            checked={isReturnable}
-                                            onChange={() => setIsReturnable(true)}
-                                            className="w-4 h-4 text-blue-600"
-                                        />
-                                        <span className="text-sm">Returnable (Temporary)</span>
-                                    </label>
-                                    <label className="flex items-center space-x-3 cursor-pointer">
-                                        <input
-                                            type="radio"
-                                            checked={!isReturnable}
-                                            onChange={() => setIsReturnable(false)}
-                                            className="w-4 h-4 text-blue-600"
-                                        />
-                                        <span className="text-sm">Non-Returnable (Project-based)</span>
-                                    </label>
+                            <div className="mb-6 space-y-4">
+                                <div>
+                                    <span className="text-sm text-gray-600">Item:</span>
+                                    <p className="font-semibold">{selectedRequest.item.name}</p>
+                                    <p className="text-sm text-gray-600">{selectedRequest.item.manualId}</p>
                                 </div>
-                            </div>
+                                <div>
+                                    <span className="text-sm text-gray-600">Issuing to:</span>
+                                    <p className="font-semibold">{selectedRequest.user.name}</p>
+                                    <p className="text-sm text-gray-600">{selectedRequest.user.email}</p>
+                                </div>
+                                <div>
+                                    <span className="text-sm text-gray-600">Duration:</span>
+                                    <p className="font-semibold">{selectedRequest.requestedDays} days</p>
+                                </div>
 
-                            {!isReturnable && (
-                                <div className="bg-yellow-50 p-4 rounded-lg space-y-3 border border-yellow-200">
-                                    <div className="flex items-start gap-2">
-                                        <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                        </svg>
-                                        <p className="text-sm text-yellow-800">
-                                            This item will be permanently allocated to {selectedRequest.user.name}'s project and will not require return.
+                                <div className="border-t pt-4">
+                                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                        Item Return Type
+                                    </label>
+                                    <div className="space-y-2">
+                                        <label className="flex items-center space-x-3 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                checked={isReturnable}
+                                                onChange={() => setIsReturnable(true)}
+                                                className="w-4 h-4 text-blue-600"
+                                            />
+                                            <span className="text-sm">Returnable (Temporary)</span>
+                                        </label>
+                                        <label className="flex items-center space-x-3 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                checked={!isReturnable}
+                                                onChange={() => setIsReturnable(false)}
+                                                className="w-4 h-4 text-blue-600"
+                                            />
+                                            <span className="text-sm">Non-Returnable (Project-based)</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {!isReturnable && (
+                                    <div className="bg-yellow-50 p-4 rounded-lg space-y-3 border border-yellow-200">
+                                        <div className="flex items-start gap-2">
+                                            <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            <p className="text-sm text-yellow-800">
+                                                This item will be permanently allocated to {selectedRequest.user.name}'s project and will not require return.
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Project Name <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={projectName}
+                                                onChange={(e) => setProjectName(e.target.value)}
+                                                placeholder="e.g., AI Research - Neural Networks"
+                                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Project Incharge
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={selectedRequest.user.name}
+                                                disabled
+                                                className="w-full px-3 py-2 border rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">Auto-populated from requesting user</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {isReturnable && (
+                                    <div className="bg-blue-50 p-3 rounded">
+                                        <span className="text-sm text-gray-600">Expected Return Date:</span>
+                                        <p className="font-bold text-blue-800">
+                                            {calculateExpectedReturn(selectedRequest.requestedDays)}
                                         </p>
                                     </div>
+                                )}
+                            </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Project Name <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={projectName}
-                                            onChange={(e) => setProjectName(e.target.value)}
-                                            placeholder="e.g., AI Research - Neural Networks"
-                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            required
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Project Incharge
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={selectedRequest.user.name}
-                                            disabled
-                                            className="w-full px-3 py-2 border rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">Auto-populated from requesting user</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {isReturnable && (
-                                <div className="bg-blue-50 p-3 rounded">
-                                    <span className="text-sm text-gray-600">Expected Return Date:</span>
-                                    <p className="font-bold text-blue-800">
-                                        {calculateExpectedReturn(selectedRequest.requestedDays)}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowModal(false)}
-                                className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
-                                disabled={issuing}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleIssue}
-                                disabled={issuing}
-                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                            >
-                                {issuing ? 'Issuing...' : 'Confirm Issue'}
-                            </button>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowModal(false)}
+                                    className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                                    disabled={issuing}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleIssue}
+                                    disabled={issuing}
+                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                    {issuing ? 'Issuing...' : 'Confirm Issue'}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
         </div>
     );
 }

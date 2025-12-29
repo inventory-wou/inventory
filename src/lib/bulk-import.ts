@@ -25,6 +25,22 @@ export interface ValidationError {
     message: string;
 }
 
+export interface CellError {
+    row: number;
+    column: string;
+    message: string;
+    severity: 'error' | 'warning' | 'info';
+}
+
+export interface DuplicateCheck {
+    row: number;
+    serialNumber: string;
+    existingItemId?: string;
+    fieldsMatch: boolean;
+    differences?: string[];
+    suggestedSerialNumber?: string;
+}
+
 export interface BulkImportResult {
     success: boolean;
     imported: number;
@@ -34,6 +50,11 @@ export interface BulkImportResult {
     missingCategories?: string[];
     createdDepartments?: number;
     createdCategories?: number;
+    // New fields for interactive validation
+    cellErrors?: CellError[];
+    duplicates?: DuplicateCheck[];
+    validationData?: ImportRow[];
+    quantityUpdates?: number; // Count of quantity updates for duplicates
 }
 
 /**
@@ -213,6 +234,79 @@ export async function validateItemRow(
     }
 
     return errors;
+}
+
+/**
+ * Check if serial number exists and compare fields
+ */
+export async function checkDuplicateSerialNumber(
+    serialNumber: string,
+    rowData: ImportRow,
+    rowIndex: number
+): Promise<DuplicateCheck> {
+    if (!serialNumber || serialNumber.trim() === '') {
+        return {
+            row: rowIndex,
+            serialNumber: '',
+            fieldsMatch: false,
+        };
+    }
+
+    try {
+        const existing = await prisma.item.findFirst({
+            where: { serialNumber: serialNumber.trim() },
+            include: {
+                category: true,
+                department: true
+            }
+        });
+
+        if (!existing) {
+            return {
+                row: rowIndex,
+                serialNumber,
+                fieldsMatch: false,
+            };
+        }
+
+        // Check if all key fields match
+        const differences: string[] = [];
+
+        if (existing.name !== rowData.name) differences.push('name');
+        if (existing.category.name !== rowData.category) differences.push('category');
+        if (existing.department.name !== rowData.department &&
+            existing.department.code !== rowData.department) {
+            differences.push('department');
+        }
+
+        const fieldsMatch = differences.length === 0;
+
+        // Generate suggested serial number if conflict
+        let suggestedSerialNumber: string | undefined;
+        if (!fieldsMatch && existing.department) {
+            try {
+                suggestedSerialNumber = await generateSerialNumber(existing.department.code);
+            } catch (error) {
+                console.error('Error generating suggested serial number:', error);
+            }
+        }
+
+        return {
+            row: rowIndex,
+            serialNumber,
+            existingItemId: existing.id,
+            fieldsMatch,
+            differences: fieldsMatch ? undefined : differences,
+            suggestedSerialNumber,
+        };
+    } catch (error) {
+        console.error(`Error checking duplicate for ${serialNumber}:`, error);
+        return {
+            row: rowIndex,
+            serialNumber,
+            fieldsMatch: false,
+        };
+    }
 }
 
 /**

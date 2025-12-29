@@ -359,6 +359,75 @@ export async function createMissingEntities(
 }
 
 /**
+ * Comprehensive validation with duplicate checking and cell-level errors
+ */
+export async function validateWithDuplicates(
+    rows: ImportRow[]
+): Promise<{
+    cellErrors: CellError[];
+    duplicates: DuplicateCheck[];
+    validationData: ImportRow[];
+}> {
+    const cellErrors: CellError[] = [];
+    const duplicates: DuplicateCheck[] = [];
+    const existingSerialNumbers = new Set<string>();
+
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowIndex = i + 2; // +2 because row 1 is header
+
+        // Basic field validation
+        const rowErrors = await validateItemRow(row, rowIndex, existingSerialNumbers);
+
+        // Convert ValidationError[] to CellError[]
+        for (const error of rowErrors) {
+            cellErrors.push({
+                row: error.row,
+                column: error.field,
+                message: error.message,
+                severity: 'error'
+            });
+        }
+
+        // Check for duplicate serial numbers
+        if (row.serialNumber && row.serialNumber.trim() !== '') {
+            const duplicateCheck = await checkDuplicateSerialNumber(
+                row.serialNumber,
+                row,
+                rowIndex
+            );
+
+            if (duplicateCheck.existingItemId) {
+                duplicates.push(duplicateCheck);
+
+                // Add info/warning based on match status
+                if (duplicateCheck.fieldsMatch) {
+                    cellErrors.push({
+                        row: rowIndex,
+                        column: 'serialNumber',
+                        message: 'Serial number exists. Quantity will be updated.',
+                        severity: 'info'
+                    });
+                } else {
+                    cellErrors.push({
+                        row: rowIndex,
+                        column: 'serialNumber',
+                        message: `Serial number exists for different item. Fields differ: ${duplicateCheck.differences?.join(', ')}`,
+                        severity: 'warning'
+                    });
+                }
+            }
+        }
+    }
+
+    return {
+        cellErrors,
+        duplicates,
+        validationData: rows
+    };
+}
+
+/**
  * Bulk create items from validated data
  */
 export async function bulkCreateItems(
@@ -516,29 +585,63 @@ export async function bulkCreateItems(
                 row.isConsumable?.toLowerCase() === 'yes' ||
                 row.isConsumable === '1';
 
-            // Create item
-            await prisma.item.create({
-                data: {
-                    name: row.name,
-                    manualId,
-                    description: row.description || null,
-                    specifications: row.specifications || null,
-                    serialNumber,
-                    departmentId: department.id,
-                    categoryId: category.id,
-                    condition: (row.condition?.toUpperCase() as any) || 'GOOD',
-                    status: 'AVAILABLE',
-                    isConsumable,
-                    currentStock: row.currentStock ? parseInt(row.currentStock) : null,
-                    minStockLevel: row.minStockLevel ? parseInt(row.minStockLevel) : null,
-                    location: row.location || null,
-                    purchaseDate: row.purchaseDate ? new Date(row.purchaseDate) : null,
-                    value: row.value ? parseFloat(row.value) : null,
-                    addedById: userId,
-                },
-            });
+            // Check for duplicate serial number
+            const duplicateCheck = await checkDuplicateSerialNumber(serialNumber, row, rowIndex);
 
-            imported++;
+            if (duplicateCheck.existingItemId && duplicateCheck.fieldsMatch) {
+                // Matching duplicate: Update quantity
+                const quantityToAdd = row.currentStock ? parseInt(row.currentStock) : 0;
+
+                if (quantityToAdd > 0) {
+                    const existingItem = await prisma.item.findUnique({
+                        where: { id: duplicateCheck.existingItemId }
+                    });
+
+                    if (existingItem) {
+                        await prisma.item.update({
+                            where: { id: duplicateCheck.existingItemId },
+                            data: {
+                                currentStock: (existingItem.currentStock || 0) + quantityToAdd
+                            }
+                        });
+                        imported++; // Count as successful import (quantity update)
+                    }
+                } else {
+                    imported++; // Count as import even if no quantity to add
+                }
+            } else if (duplicateCheck.existingItemId && !duplicateCheck.fieldsMatch) {
+                // Conflicting duplicate: Skip this row (user should resolve in frontend)
+                errors.push({
+                    row: rowIndex,
+                    field: 'serialNumber',
+                    message: `Serial number conflict: Fields differ (${duplicateCheck.differences?.join(', ')})`,
+                });
+                failed++;
+                continue;
+            } else {
+                // No duplicate: Create new item
+                await prisma.item.create({
+                    data: {
+                        name: row.name,
+                        manualId,
+                        description: row.description || null,
+                        specifications: row.specifications || null,
+                        serialNumber,
+                        departmentId: department.id,
+                        categoryId: category.id,
+                        condition: (row.condition?.toUpperCase() as any) || 'GOOD',
+                        status: 'AVAILABLE',
+                        isConsumable,
+                        currentStock: row.currentStock ? parseInt(row.currentStock) : null,
+                        minStockLevel: row.minStockLevel ? parseInt(row.minStockLevel) : null,
+                        location: row.location || null,
+                        purchaseDate: row.purchaseDate ? new Date(row.purchaseDate) : null,
+                        value: row.value ? parseFloat(row.value) : null,
+                        addedById: userId,
+                    },
+                });
+                imported++;
+            }
         } catch (error) {
             console.error(`Error importing row ${rowIndex}:`, error);
             errors.push({

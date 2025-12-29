@@ -7,6 +7,7 @@ import {
     bulkCreateItems,
     generateCSVTemplate,
     generateExcelTemplate,
+    validateWithDuplicates,
 } from '@/lib/bulk-import';
 
 /**
@@ -118,15 +119,21 @@ export async function POST(request: NextRequest) {
 
         // If dry run, only validate without importing
         if (dryRun) {
-            const result = await bulkCreateItems(rows, session.user.id, true, false); // Don't auto-create in dry run
+            const validation = await validateWithDuplicates(rows);
+
             return NextResponse.json({
                 dryRun: true,
                 totalRows: rows.length,
-                validRows: result.imported,
-                invalidRows: result.failed,
-                errors: result.errors,
-                missingDepartments: result.missingDepartments || [],
-                missingCategories: result.missingCategories || [],
+                validRows: rows.length - validation.cellErrors.filter(e => e.severity === 'error').length,
+                invalidRows: validation.cellErrors.filter(e => e.severity === 'error').length,
+                errors: validation.cellErrors.filter(e => e.severity === 'error').map(e => ({
+                    row: e.row,
+                    field: e.column,
+                    message: e.message
+                })),
+                cellErrors: validation.cellErrors,
+                duplicates: validation.duplicates,
+                validationData: validation.validationData,
                 extractedImages,
             });
         }

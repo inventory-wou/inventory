@@ -261,7 +261,7 @@ export default function BulkImportPage() {
                     </li>
                     <li className="flex items-start gap-2">
                         <span className="text-yellow-600 font-bold">•</span>
-                        <span><strong>Required Fields:</strong> name, description, departmentCode, categoryName are mandatory</span>
+                        <span><strong>Required Fields:</strong> name, department, category are mandatory</span>
                     </li>
                     <li className="flex items-start gap-2">
                         <span className="text-yellow-600 font-bold">•</span>

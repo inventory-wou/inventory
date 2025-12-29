@@ -3,6 +3,9 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import PageHeader from '@/components/common/PageHeader';
+import Button from '@/components/common/Button';
+import { Download, Package, FileText, AlertTriangle } from 'lucide-react';
 
 export default function AdminReports() {
     const { data: session, status } = useSession();
@@ -123,6 +126,13 @@ export default function AdminReports() {
 
     return (
         <div className="min-h-screen bg-gradient-light">
+            <PageHeader
+                title="Reports & Analytics"
+                subtitle="Generate and download inventory reports"
+                showBackButton
+                backButtonLabel="Back"
+            />
+
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Page Header */}
@@ -308,25 +318,15 @@ export default function AdminReports() {
 
                     {/* Generate Button */}
                     <div className="flex justify-center">
-                        <button
+                        <Button
                             onClick={handleGenerateReport}
-                            disabled={loading}
-                            className="px-8 py-3 bg-gradient-primary text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                            variant="primary"
+                            size="lg"
+                            icon={Download}
+                            loading={loading}
                         >
-                            {loading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                    Generating Report...
-                                </>
-                            ) : (
-                                <>
-                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    Download Report
-                                </>
-                            )}
-                        </button>
+                            {loading ? 'Generating Report...' : 'Download Report'}
+                        </Button>
                     </div>
 
                     {/* Info Box */}

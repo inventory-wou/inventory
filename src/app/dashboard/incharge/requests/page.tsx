@@ -1,6 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import PageHeader from '@/components/common/PageHeader';
+import SearchBar from '@/components/common/SearchBar';
+import Button from '@/components/common/Button';
+import EmptyState from '@/components/common/EmptyState';
+import { CheckCircle, XCircle, Inbox } from 'lucide-react';
 
 interface IssueRequest {
     id: string;
@@ -141,12 +146,15 @@ export default function InchargeRequestsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
-            <div className="max-w-7xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-800">Request Management</h1>
-                    <p className="text-gray-600 mt-2">Approve or reject item requests from users</p>
-                </div>
+        <div className="min-h-screen bg-gray-50">
+            <PageHeader
+                title="Request Management"
+                subtitle="Approve or reject item requests from users"
+                showBackButton
+                backButtonLabel="Back"
+            />
+
+            <div className="max-w-7xl mx-auto p-8">
 
                 {/* Filters */}
                 <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
@@ -154,19 +162,17 @@ export default function InchargeRequestsPage() {
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="px-4 py-2 border rounded-lg"
+                            className="px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                         >
                             <option value="">All Statuses</option>
                             <option value="PENDING">Pending</option>
                             <option value="APPROVED">Approved</option>
                             <option value="REJECTED">Rejected</option>
                         </select>
-                        <input
-                            type="text"
-                            placeholder="Search by user or item name..."
+                        <SearchBar
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="px-4 py-2 border rounded-lg"
+                            onChange={setSearch}
+                            placeholder="Search by user or item name..."
                         />
                     </div>
                 </div>
@@ -219,18 +225,22 @@ export default function InchargeRequestsPage() {
 
                             {request.status === 'PENDING' && (
                                 <div className="flex gap-3 mt-4 pt-4 border-t">
-                                    <button
+                                    <Button
                                         onClick={() => openApproveModal(request)}
-                                        className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                        variant="success"
+                                        icon={CheckCircle}
+                                        className="flex-1"
                                     >
                                         Approve
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
                                         onClick={() => openRejectModal(request)}
-                                        className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                                        variant="danger"
+                                        icon={XCircle}
+                                        className="flex-1"
                                     >
                                         Reject
-                                    </button>
+                                    </Button>
                                 </div>
                             )}
 
@@ -245,7 +255,11 @@ export default function InchargeRequestsPage() {
                 </div>
 
                 {requests.length === 0 && (
-                    <div className="text-center py-12 text-gray-500">No requests found</div>
+                    <EmptyState
+                        icon={Inbox}
+                        title="No requests found"
+                        description="There are no item requests matching your filters"
+                    />
                 )}
             </div>
 
@@ -299,8 +313,7 @@ export default function InchargeRequestsPage() {
                             <button
                                 onClick={actionType === 'approve' ? handleApprove : handleReject}
                                 disabled={processing}
-                                className={`flex-1 px-4 py-2 text-white rounded-lg disabled:opacity-50 ${actionType === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
-                                    }`}
+                                className={`flex-1 px-4 py-2 text-white rounded-lg disabled:opacity-50 ${actionType === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
                             >
                                 {processing ? 'Processing...' : actionType === 'approve' ? 'Approve' : 'Reject'}
                             </button>

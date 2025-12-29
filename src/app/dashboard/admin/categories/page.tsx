@@ -3,6 +3,9 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import PageHeader from '@/components/common/PageHeader';
+import EmptyState from '@/components/common/EmptyState';
+import { Plus, Zap, FolderOpen } from 'lucide-react';
 
 interface Category {
     id: string;
@@ -182,44 +185,34 @@ export default function CategoriesPage() {
 
     return (
         <div className="min-h-screen bg-gradient-light">
-            <header className="bg-white border-b border-secondary-200 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-secondary-800">Category Management</h1>
-                            <p className="text-sm text-secondary-600 mt-1">Manage item categories</p>
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => {
-                                    setBulkCategories(Array(5).fill({ name: '', description: '', maxBorrowDuration: 7 }));
-                                    setBulkResult(null);
-                                    setShowBulkModal(true);
-                                }}
-                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
-                            >
-                                ⚡ Quick Add
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setEditingCategory(null);
-                                    setFormData({ name: '', description: '', maxBorrowDuration: 7, requiresApproval: false, visibleToStudents: true, visibleToStaff: true });
-                                    setShowModal(true);
-                                }}
-                                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium"
-                            >
-                                + Create Category
-                            </button>
-                            <button
-                                onClick={() => router.push('/dashboard/admin')}
-                                className="px-4 py-2 bg-secondary-100 hover:bg-secondary-200 text-secondary-700 rounded-lg text-sm font-medium"
-                            >
-                                ← Back
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <PageHeader
+                title="Category Management"
+                subtitle="Manage item categories"
+                showBackButton
+                backButtonLabel="Back"
+                actions={[
+                    {
+                        label: 'Quick Add',
+                        onClick: () => {
+                            setBulkCategories(Array(5).fill({ name: '', description: '', maxBorrowDuration: 7 }));
+                            setBulkResult(null);
+                            setShowBulkModal(true);
+                        },
+                        variant: 'success',
+                        icon: Zap
+                    },
+                    {
+                        label: 'Add Category',
+                        onClick: () => {
+                            setEditingCategory(null);
+                            setFormData({ name: '', description: '', maxBorrowDuration: 7, requiresApproval: false, visibleToStudents: true, visibleToStaff: true });
+                            setShowModal(true);
+                        },
+                        variant: 'primary',
+                        icon: Plus
+                    }
+                ]}
+            />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Search */}
@@ -242,9 +235,17 @@ export default function CategoriesPage() {
                         <div className="inline-block w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
                     </div>
                 ) : categories.length === 0 ? (
-                    <div className="bg-white rounded-xl shadow-md p-8 text-center">
-                        <p className="text-secondary-500">No categories found</p>
-                    </div>
+                    <EmptyState
+                        icon={FolderOpen}
+                        title="No categories found"
+                        description="Get started by creating your first category"
+                        actionLabel="Create Category"
+                        onAction={() => {
+                            setEditingCategory(null);
+                            setFormData({ name: '', description: '', maxBorrowDuration: 7, requiresApproval: false, visibleToStudents: true, visibleToStaff: true });
+                            setShowModal(true);
+                        }}
+                    />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {categories.map((cat) => (

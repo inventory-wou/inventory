@@ -2,12 +2,17 @@
 
 A comprehensive inventory management system for Robotics Lab, AI Research Centre, and Metaverse Lab at Woxsen University.
 
-## 🚀 **Current Status: Phase 8 Complete + Advanced Features (100%)**
+## 🚀 **Current Status: Phase 8.5 Complete - Procurement & Transfer System (100%)**
 
-**Implemented**: Phases 1-8 + Enhanced User Roles, Bulk Approval, Department Browsing & Role Permissions  
-**Total Progress**: 8/9 Phases + Advanced Features (98%)
+**Implemented**: Phases 1-8.5 + Enhanced User Roles, Procurement Management, Inter-Department Transfers, Non-Returnable Items  
+**Total Progress**: 8.5/9 Phases (99%)
 
-**Latest Updates (Dec 23, 2024)**:
+**Latest Updates (December 2024)**:
+- ✅ **Phase 8.5 Complete**: Procurement & Multi-Department Transfer System (13 APIs, 6 pages)
+- ✅ **PROCUREMENT Role**: New specialized role for procurement team management
+- ✅ **Inter-Department Transfers**: Browse, request, approve, complete transfer workflow
+- ✅ **Non-Returnable Items**: Project-based permanent allocations with tracking
+- ✅ **Enhanced User Creation**: Admin "Add User" button with PROCUREMENT role support
 - ✅ **Database Schema Update**: `imageUrl` → `image` field rename
 - ✅ **Settings API Enhancement**: All authenticated users can read settings (not just admins)
 - ✅ **Dynamic Role Permissions**: Dashboards fetch borrowing limits from database settings
@@ -38,7 +43,10 @@ A comprehensive inventory management system for Robotics Lab, AI Research Centre
 
 Complete university inventory management system with:
 - Multi-department support (Robotics, AI, Metaverse labs)
-- **5 User Roles**: Admin, Incharge, Faculty, Staff, Student
+- **6 User Roles**: Admin, Incharge, **Procurement**, Faculty, Staff, Student
+- **Procurement Management**: Multi-department item availability control
+- **Inter-Department Transfers**: Complete request, approval, transfer workflow
+- **Non-Returnable Items**: Project-based permanent allocations
 - **Bulk user approval** for efficient onboarding
 - **Department browsing** with role-based item visibility
 - **Configurable role permissions** (borrow limits, approval requirements)
@@ -523,6 +531,299 @@ Complete university inventory management system with:
 
 ---
 
+### ✅ Phase 8.5: Procurement & Multi-Department Transfer System (100%)
+
+**Latest Update (December 2024)**: Complete procurement management and inter-department transfer capabilities with non-returnable item support.
+
+#### 🏢 Procurement Management System
+
+**User Roles & Access**
+- ✅ **New PROCUREMENT Role** added to system
+  - Specialized role for procurement team members
+  - Full access to procurement dashboard and inventory
+  - Manage cross-department item availability
+- ✅ **Admin User Creation**
+  - "Add User" button on User Management page
+  - Create users directly without registration flow
+  - Support for all roles including PROCUREMENT
+  - Auto-approved with immediate access
+  - Password hashing and validation
+
+**Procurement Dashboard** (`/dashboard/procurement`)
+- ✅ Overview statistics display
+  - Total items in procurement inventory
+  - Pending transfer requests
+  - Completed transfers
+  - Active items across departments
+- ✅ Quick action navigation
+  - Manage Inventory link
+  - Transfer Requests management
+  - Add New Item button
+- ✅ Role-based access (ADMIN + PROCUREMENT only)
+
+**Procurement Inventory Management** (`/dashboard/procurement/inventory`)
+- ✅ **Inventory Listing**
+  - Grid view of all procurement items
+  - Real-time search (name, manual ID, serial number)
+  - Department access chips display
+  - Status and condition badges
+  - Stock levels for consumables
+  - View Details and Edit Access actions
+  - Empty state with call-to-action
+  - Pagination support
+
+- ✅ **Add Procurement Items** (`/dashboard/procurement/inventory/add`)
+  - Comprehensive form with all item fields
+  - **Department Availability Selection**
+    - Checkbox grid for all departments
+    - Multi-select to control item accessibility
+    - Determines which departments can request transfers
+  - Conditional fields for consumables
+    - Current stock input
+    - Minimum stock level
+  - Purchase information (date, value)
+  - Full validation and error handling
+  - Auto-approval for procurement-added items
+
+**Backend APIs**
+- ✅ `POST /api/admin/procurement/items` - Add items with multi-department access
+- ✅ `GET /api/admin/procurement/items` - List procurement inventory (with filters)
+- ✅ `GET /api/admin/procurement/items/[id]` - Get item with department access details
+- ✅ `PUT /api/admin/procurement/items/[id]` - Update department availability settings
+- ✅ `POST /api/admin/users/create` - Create users directly (including PROCUREMENT role)
+
+#### 🔄 Inter-Department Transfer System
+
+**Transfer Workflow**
+1. **Browse Items** → Request Transfer → Approval → Complete Transfer
+
+**Browse Other Departments' Items** (`/dashboard/incharge/transfer/browse`)
+- ✅ **Department Selector**
+  - Dropdown to select any department
+  - View only that department's available items
+- ✅ **Item Cards Display**
+  - Full item information with images
+  - Status badges (only AVAILABLE items shown)
+  - Stock levels for consumables
+  - Condition and category display
+- ✅ **Request Transfer Modal**
+  - Purpose field (required)
+  - Quantity selector (for consumables with validation)
+  - Auto-detection of requesting department
+  - Submit button with validation
+- ✅ Real-time search filtering
+
+**Transfer Request Management** (`/dashboard/incharge/transfer`)
+- ✅ **Filtering System**
+  - Direction filter: All / Incoming / Outgoing
+  - Status filter: All / PENDING / APPROVED / COMPLETED / REJECTED
+  - Combined filtering for precise views
+- ✅ **Request Cards**
+  - Item details with categories
+  - From → To department display
+  - Requester information
+  - Request date and purpose
+  - Quantity for consumables
+  - Color-coded status badges
+  - Rejection reason display (if rejected)
+- ✅ **Actions Based on Status**
+  - **Incoming PENDING**: Approve or Reject buttons
+  - **Any APPROVED**: Complete Transfer button
+  - **COMPLETED**: Display completion details
+- ✅ Quick navigation to "Request Transfer" page
+
+**Transfer Actions**
+- ✅ **Approve Transfer**
+  - One-click approval for incoming requests
+  - Only source department incharges can approve
+  - Updates status to APPROVED
+  - Audit log creation
+- ✅ **Reject Transfer**
+  - Mandatory rejection reason input
+  - Updates status to REJECTED
+  - Notifies requesting department
+  - Audit trail maintained
+- ✅ **Complete Transfer**
+  - Finalizes approved transfers
+  - **Consumable Logic**: Reduces stock from source, adds to destination
+  - **Non-Consumable Logic**: Updates item ownership (departmentId)
+  - Creates TransferRecord for permanent tracking
+  - Updates TransferRequest status to COMPLETED
+  - Optional notes field
+  - Full transaction safety
+
+**Backend Transfer APIs**
+- ✅ `POST /api/incharge/transfer/request` - Request item transfer
+- ✅ `GET /api/incharge/transfer/request` - List transfers (filtered by direction/status)
+- ✅ `PUT /api/incharge/transfer/requests/[id]/approve` - Approve transfer
+- ✅ `PUT /api/incharge/transfer/requests/[id]/reject` - Reject with reason
+- ✅ `POST /api/incharge/transfer/complete` - Finalize transfer (stock/ownership update)
+
+**Database Models (New)**
+- ✅ **ItemDepartmentAccess**
+  - Links items to departments
+  - Controls which departments can request transfers
+  - `canTransfer` flag for transfer permissions
+- ✅ **TransferRequest**
+  - Tracks transfer requests
+  - Status: PENDING, APPROVED, REJECTED, COMPLETED
+  - Purpose, quantity, dates, approver details
+  - Rejection reason storage
+- ✅ **TransferRecord**
+  - Permanent record of completed transfers
+  - Links to original request
+  - Tracks who completed the transfer
+  - Transfer date and notes
+
+#### 📦 Non-Returnable Item System
+
+**Issue as Non-Returnable** (Enhanced `/dashboard/incharge/issue`)
+- ✅ **Returnable/Non-Returnable Selection**
+  - Radio buttons: "Returnable (Temporary)" vs "Non-Returnable (Project-based)"
+  - Default: Returnable
+  - Conditional UI based on selection
+- ✅ **Non-Returnable Mode**
+  - Yellow warning banner
+    - "This item will be permanently allocated to [User]'s project"
+    - Clear explanation of permanent allocation
+  - **Project Name Input** (required)
+    - Text field for project identification
+    - Example placeholder
+    - Client-side validation
+  - **Project Incharge Display** (read-only)
+    - Auto-populated with requesting user's name
+    - Helper text: "Auto-populated from requesting user"
+    - Reduces data entry and errors
+- ✅ **Returnable Mode**
+  - Shows expected return date
+  - Standard temporary issuance flow
+
+**Display Non-Returnable Status** (`/dashboard/incharge/return`)
+- ✅ **Purple "Permanent" Badge**
+  - Distinct from returnable items' status badges
+  - Immediately identifies non-returnable allocations
+- ✅ **Project Information Panel**
+  - Purple-highlighted box
+  - Displays project name
+  - Shows project incharge
+  - Message: "This item is permanently allocated and does not require return"
+- ✅ **Conditional Labels**
+  - "Expected Return" for returnable items
+  - "Allocated On" for permanent items
+- ✅ **Filter for Issuance Type**
+  - Dropdown with 3 options:
+    - All Issuances (default)
+    - Temporary (Returnable)
+    - Permanent (Non-Returnable)
+  - Client-side filtering for instant results
+  - Synchronized with all display features
+
+**Backend Implementation**
+- ✅ **Database Fields** (IssueRecord model)
+  - `isReturnable` (boolean, default: true)
+  - `projectName` (string, optional)
+  - `projectIncharge` (string, optional)
+- ✅ **API Enhancements**
+  - `POST /api/incharge/issue` - Accepts non-returnable parameters
+  - Auto-populates `projectIncharge` from requesting user
+  - Validates project name when non-returnable
+  - `GET /api/incharge/return` - Filters out non-returnable items from return queue
+
+**Use Cases**
+- Project-based equipment allocation
+- Permanent lab equipment assignments
+- Long-term research project tools
+- Student final year project allocations
+- Staff permanent office equipment
+
+#### 🎯 User Creation Enhancement
+
+**Admin User Management Improvements**
+- ✅ **"Add User" Button**
+  - Blue primary button in page header
+  - Icon: UserPlus from lucide-react
+  - Opens comprehensive creation modal
+- ✅ **User Creation Modal**
+  - **Required Fields**:
+    - Full Name
+    - Email (validated for uniqueness)
+    - Password (minimum 6 characters, hashed with bcrypt)
+    - **Role Dropdown**:
+      - Student
+      - Staff
+      - Faculty
+      - Incharge
+      - **PROCUREMENT** ← New option
+      - Admin
+  - **Optional Fields**:
+    - Phone Number
+    - Student ID
+    - Employee ID
+  - Form validation with real-time feedback
+  - Cancel and Create actions
+- ✅ **Backend Processing**
+  - Password hashing with bcryptjs
+  - Email uniqueness check
+  - Auto-approval (admin-created = instantly active)
+  - Auto-activation (isActive = true)
+  - Audit log creation
+  - Error handling and validation
+
+**Workflow**
+1. Admin clicks "Add User"
+2. Fills form (name, email, password, select PROCUREMENT role)
+3. Clicks "Create User"
+4. User created and can log in immediately
+5. No approval workflow needed for admin-created users
+
+#### 📊 Complete Feature Summary
+
+**What's Production-Ready:**
+- ✅ Procurement team capabilities (full dashboard + inventory)
+- ✅ Multi-department item availability management
+- ✅ Inter-department transfer workflow (browse, request, approve, complete)
+- ✅ Non-returnable project-based issuances
+- ✅ Project detail capture (name + auto-incharge)
+- ✅ Permanent allocation tracking
+- ✅ Transfer history and audit trail
+- ✅ Enhanced user creation (including PROCUREMENT role)
+- ✅ Stock management for consumables during transfers
+- ✅ Ownership transfer for non-consumables
+- ✅ Filter and search capabilities
+
+**Build Verification:**
+- All features compiled successfully (4 builds verified)
+- Zero TypeScript errors
+- All routes functional
+- Database schema synchronized
+- Prisma client up-to-date
+
+**API Endpoints Added (13 Total):**
+1. `POST /api/admin/procurement/items` - Add with dept access
+2. `GET /api/admin/procurement/items` - List with filters
+3. `GET /api/admin/procurement/items/[id]` - Get with access
+4. `PUT /api/admin/procurement/items/[id]` - Update access
+5. `POST /api/incharge/transfer/request` - Request transfer
+6. `GET /api/incharge/transfer/request` - List requests
+7. `PUT /api/incharge/transfer/requests/[id]/approve` - Approve
+8. `PUT /api/incharge/transfer/requests/[id]/reject` - Reject
+9. `POST /api/incharge/transfer/complete` - Complete transfer
+10. `POST /api/incharge/issue` - Enhanced with non-returnable
+11. `GET /api/incharge/return` - Filters non-returnable
+12. `POST /api/admin/users/create` - Create user directly
+13. `GET /api/admin/items` - Enhanced for dept filtering
+
+**Frontend Pages Added (4 New + 2 Enhanced):**
+1. `/dashboard/procurement` - Main dashboard
+2. `/dashboard/procurement/inventory` - Item listing
+3. `/dashboard/procurement/inventory/add` - Add item form
+4. `/dashboard/incharge/transfer` - Manage transfers
+5. `/dashboard/incharge/transfer/browse` - Browse other depts
+6. `/dashboard/incharge/issue` - Enhanced (non-returnable)
+7. `/dashboard/incharge/return` - Enhanced (filter + badges)
+
+---
+
 ### ❌ Phase 9: Testing & Optimization (0%)
 
 **Planned Features**
@@ -765,11 +1066,32 @@ inventory-system/
 - Timeline: expectedReturnDate
 - Relations: user, item, department, issueRecord
 
-**IssueRecord** (12 fields)
+**IssueRecord** (15 fields)
 - Issue: issuedAt, dueDate
+- **Project**: isReturnable, projectName, projectIncharge (for permanent allocations)
 - Return: returnedAt, actualCondition, notes
 - Damage: isDamaged, damageDescription, compensationRequired
 - Relations: user, item, department, issueRequest
+
+**ItemDepartmentAccess** (7 fields) **[NEW - Phase 8.5]**
+- Access: itemId, departmentId, canTransfer
+- Timeline: createdAt, updatedAt
+- Relations: item, department
+- Purpose: Controls which departments can access and request transfers for items
+
+**TransferRequest** (13 fields) **[NEW - Phase 8.5]**
+- Transfer: itemId, sourceDepartmentId, destinationDepartmentId, requestedBy
+- Details: purpose, quantity (for consumables), status
+- Approval: approvedBy, approvedAt, rejectionReason
+- Timeline: createdAt, updatedAt
+- Relations: item, sourceDepartment, destinationDepartment, requester, approver, transferRecord
+- Statuses: PENDING,APPROVED, REJECTED, COMPLETED, CANCELLED
+
+**TransferRecord** (9 fields) **[NEW - Phase 8.5]**
+- Transfer: requestId, itemId, fromDepartmentId, toDepartmentId
+- Details: quantity (for consumables), notes
+- Tracking: completedBy, completedAt, createdAt
+- Relations: request, item, fromDepartment, toDepartment, completedByUser
 
 **AuditLog** (7 fields)
 - Tracking: action, entityType, entityId, details, createdAt
@@ -784,7 +1106,10 @@ inventory-system/
 enum UserRole {
   ADMIN
   INCHARGE
-  USER
+  PROCUREMENT  // Added in Phase 8.5
+  FACULTY
+  STAFF
+  STUDENT
 }
 
 enum ItemCondition {

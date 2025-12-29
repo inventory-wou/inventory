@@ -3,6 +3,10 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import PageHeader from '@/components/common/PageHeader';
+import StatsCard from '@/components/common/StatsCard';
+import EmptyState from '@/components/common/EmptyState';
+import { Plus, Building2, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface Department {
     id: string;
@@ -204,47 +208,27 @@ export default function DepartmentsPage() {
 
     return (
         <div className="min-h-screen bg-gradient-light">
-            {/* Header */}
-            <header className="bg-white border-b border-secondary-200 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-secondary-800">Department Management</h1>
-                            <p className="text-sm text-secondary-600 mt-1">Manage departments and assign incharges</p>
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowCreateModal(true)}
-                                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors"
-                            >
-                                + Create Department
-                            </button>
-                            <button
-                                onClick={() => router.push('/dashboard/admin')}
-                                className="px-4 py-2 bg-secondary-100 hover:bg-secondary-200 text-secondary-700 rounded-lg text-sm font-medium transition-colors"
-                            >
-                                ← Back
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <PageHeader
+                title="Department Management"
+                subtitle="Manage departments and assign incharges"
+                showBackButton
+                backButtonLabel="Back"
+                actions={[
+                    {
+                        label: 'Create Department',
+                        onClick: () => setShowCreateModal(true),
+                        variant: 'primary',
+                        icon: Plus
+                    }
+                ]}
+            />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div className="bg-white rounded-lg shadow-md p-4 border border-secondary-200">
-                        <p className="text-sm text-secondary-600">Total Departments</p>
-                        <p className="text-2xl font-bold text-secondary-800">{stats.totalDepartments}</p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-md p-4 border border-secondary-200">
-                        <p className="text-sm text-secondary-600">With Incharge</p>
-                        <p className="text-2xl font-bold text-green-600">{stats.withIncharge}</p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-md p-4 border border-secondary-200">
-                        <p className="text-sm text-secondary-600">Without Incharge</p>
-                        <p className="text-2xl font-bold text-yellow-600">{stats.withoutIncharge}</p>
-                    </div>
+                    <StatsCard label="Total Departments" value={stats.totalDepartments} icon={Building2} theme="default" />
+                    <StatsCard label="With Incharge" value={stats.withIncharge} icon={CheckCircle} theme="success" />
+                    <StatsCard label="Without Incharge" value={stats.withoutIncharge} icon={AlertCircle} theme="warning" />
                 </div>
 
                 {/* Search */}
@@ -272,18 +256,13 @@ export default function DepartmentsPage() {
                         <p className="mt-4 text-secondary-600">Loading departments...</p>
                     </div>
                 ) : departments.length === 0 ? (
-                    <div className="bg-white rounded-xl shadow-md p-8 text-center">
-                        <svg className="w-16 h-16 mx-auto mb-4 text-secondary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
-                        <p className="text-secondary-500">No departments found</p>
-                        <button
-                            onClick={() => setShowCreateModal(true)}
-                            className="mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium"
-                        >
-                            Create Your First Department
-                        </button>
-                    </div>
+                    <EmptyState
+                        icon={Building2}
+                        title="No departments found"
+                        description="Create your first department to get started"
+                        actionLabel="Create Your First Department"
+                        onAction={() => setShowCreateModal(true)}
+                    />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {departments.map((dept) => (

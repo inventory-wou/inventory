@@ -43,6 +43,7 @@
     "cloudinary": "^2.5.1",
     "csv-parse": "^6.1.0",
     "exceljs": "^4.4.0",
+    "lucide-react": "^0.562.0",
     "next": "^15.5.9",
     "next-auth": "^4.24.11",
     "next-cloudinary": "^6.15.1",

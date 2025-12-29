@@ -4,6 +4,9 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import UserTable from '@/components/admin/UserTable';
+import PageHeader from '@/components/common/PageHeader';
+import StatsCard from '@/components/common/StatsCard';
+import { UserPlus, Users, Clock } from 'lucide-react';
 
 interface User {
     id: string;
@@ -345,46 +348,36 @@ export default function UserManagementPage() {
 
     return (
         <div className="min-h-screen bg-gradient-light">
-            {/* Header */}
-            <header className="bg-white border-b border-secondary-200 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-secondary-800">User Management</h1>
-                            <p className="text-sm text-secondary-600 mt-1">Manage users, approvals, and roles</p>
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowCreateModal(true)}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                                Add User
-                            </button>
-                            <button
-                                onClick={() => router.push('/dashboard/admin')}
-                                className="px-4 py-2 bg-secondary-100 hover:bg-secondary-200 text-secondary-700 rounded-lg text-sm font-medium transition-colors"
-                            >
-                                ← Back to Dashboard
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <PageHeader
+                title="User Management"
+                subtitle="Manage users, approvals, and roles"
+                showBackButton
+                backButtonLabel="Back"
+                actions={[
+                    {
+                        label: 'Add User',
+                        onClick: () => setShowCreateModal(true),
+                        variant: 'primary',
+                        icon: UserPlus
+                    }
+                ]}
+            />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-white rounded-lg shadow-md p-4 border border-secondary-200">
-                        <p className="text-sm text-secondary-600">Total Users</p>
-                        <p className="text-2xl font-bold text-secondary-800">{pagination.totalCount}</p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-md p-4 border border-secondary-200">
-                        <p className="text-sm text-secondary-600">Pending Approval</p>
-                        <p className="text-2xl font-bold text-yellow-600">{stats.pendingCount}</p>
-                    </div>
+                    <StatsCard
+                        label="Total Users"
+                        value={pagination.totalCount}
+                        icon={Users}
+                        theme="default"
+                    />
+                    <StatsCard
+                        label="Pending Approval"
+                        value={stats.pendingCount}
+                        icon={Clock}
+                        theme="warning"
+                    />
                 </div>
 
                 {/* Tabs */}

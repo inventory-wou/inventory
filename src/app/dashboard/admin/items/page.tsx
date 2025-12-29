@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import ItemFormModal from '@/components/admin/ItemFormModal';
+import PageHeader from '@/components/common/PageHeader';
+import StatsCard from '@/components/common/StatsCard';
+import Button from '@/components/common/Button';
+import { Plus, Package, CheckCircle, AlertCircle, XCircle, Upload, Printer, Edit, Trash2 } from 'lucide-react';
 
 interface Item {
     id: string;
@@ -336,54 +340,32 @@ export default function ItemsPage() {
 
     return (
         <div className="min-h-screen bg-gradient-light">
-            <header className="bg-white border-b border-secondary-200 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-secondary-800">Inventory Management</h1>
-                            <p className="text-sm text-secondary-600 mt-1">Manage all inventory items</p>
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => {
-                                    setEditingItem(null);
-                                    resetForm();
-                                    setShowModal(true);
-                                }}
-                                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium"
-                            >
-                                + Add Item
-                            </button>
-                            <button
-                                onClick={() => router.push('/dashboard/admin')}
-                                className="px-4 py-2 bg-secondary-100 hover:bg-secondary-200 text-secondary-700 rounded-lg text-sm font-medium"
-                            >
-                                ← Back
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <PageHeader
+                title="Inventory Management"
+                subtitle="Manage all inventory items"
+                showBackButton
+                backButtonLabel="Back"
+                actions={[
+                    {
+                        label: 'Add Item',
+                        onClick: () => {
+                            setEditingItem(null);
+                            resetForm();
+                            setShowModal(true);
+                        },
+                        variant: 'primary',
+                        icon: Plus
+                    }
+                ]}
+            />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-white rounded-lg shadow-md p-4 border border-secondary-200">
-                        <p className="text-sm text-secondary-600">Total Items</p>
-                        <p className="text-2xl font-bold text-secondary-800">{stats.total}</p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-md p-4 border border-secondary-200">
-                        <p className="text-sm text-secondary-600">Available</p>
-                        <p className="text-2xl font-bold text-green-600">{stats.available}</p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-md p-4 border border-secondary-200">
-                        <p className="text-sm text-secondary-600">Issued</p>
-                        <p className="text-2xl font-bold text-blue-600">{stats.issued}</p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-md p-4 border border-secondary-200">
-                        <p className="text-sm text-secondary-600">Damaged</p>
-                        <p className="text-2xl font-bold text-red-600">{stats.damaged}</p>
-                    </div>
+                    <StatsCard label="Total Items" value={stats.total} icon={Package} theme="default" />
+                    <StatsCard label="Available" value={stats.available} icon={CheckCircle} theme="success" />
+                    <StatsCard label="Issued" value={stats.issued} icon={AlertCircle} theme="primary" />
+                    <StatsCard label="Damaged" value={stats.damaged} icon={XCircle} theme="error" />
                 </div>
 
                 {/* Advanced Search Panel */}
@@ -414,12 +396,14 @@ export default function ItemsPage() {
                                     Clear All
                                 </button>
                             )}
-                            <button
+                            <Button
                                 onClick={() => router.push('/dashboard/admin/items/bulk-import')}
-                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                                variant="success"
+                                size="md"
+                                icon={Upload}
                             >
-                                📤 Bulk Import
-                            </button>
+                                Bulk Import
+                            </Button>
                         </div>
 
                         {/* Advanced Filters Panel */}

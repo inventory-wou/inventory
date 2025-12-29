@@ -20,6 +20,10 @@ interface ImportResult {
     dryRun?: boolean;
     validRows?: number;
     invalidRows?: number;
+    missingDepartments?: string[];
+    missingCategories?: string[];
+    createdDepartments?: number;
+    createdCategories?: number;
 }
 
 export default function BulkImportPage() {
@@ -36,6 +40,14 @@ export default function BulkImportPage() {
     const [uploadingImages, setUploadingImages] = useState(false);
     const [imageUploadResults, setImageUploadResults] = useState<any>(null);
     const [showImageTab, setShowImageTab] = useState(false);
+
+    // Missing entities confirmation
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [pendingFile, setPendingFile] = useState<File | null>(null);
+    const [missingEntities, setMissingEntities] = useState<{
+        departments: string[];
+        categories: string[];
+    } | null>(null);
 
     if (status === 'loading') {
         return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
@@ -119,12 +131,24 @@ export default function BulkImportPage() {
                 throw new Error(data.error || 'Upload failed');
             }
 
-            setResult(data);
-            setShowResults(true);
+            // Check if there are missing entities during dry run
+            if (dryRun && (data.missingDepartments?.length > 0 || data.missingCategories?.length > 0)) {
+                setMissingEntities({
+                    departments: data.missingDepartments || [],
+                    categories: data.missingCategories || [],
+                });
+                setPendingFile(file);
+                setShowConfirmDialog(true);
+                setResult(data);
+                setShowResults(true);
+            } else {
+                setResult(data);
+                setShowResults(true);
 
-            if (!dryRun && data.success) {
-                // Clear file after successful import
-                setFile(null);
+                if (!dryRun && data.success) {
+                    // Clear file after successful import
+                    setFile(null);
+                }
             }
         } catch (error) {
             console.error('Upload error:', error);
@@ -132,6 +156,53 @@ export default function BulkImportPage() {
         } finally {
             setUploading(false);
         }
+    };
+
+    const handleConfirmAutoCreate = async () => {
+        if (!pendingFile) return;
+
+        setShowConfirmDialog(false);
+        setUploading(true);
+        setShowResults(false);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', pendingFile);
+            formData.append('dryRun', 'false');
+            formData.append('skipInvalid', 'true');
+            formData.append('autoCreateMissing', 'true'); // Enable auto-create
+
+            const response = await fetch('/api/admin/items/bulk-import', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Upload failed');
+            }
+
+            setResult(data);
+            setShowResults(true);
+
+            if (data.success) {
+                setFile(null);
+                setPendingFile(null);
+                setMissingEntities(null);
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert(error instanceof Error ? error.message : 'Upload failed');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleCancelAutoCreate = () => {
+        setShowConfirmDialog(false);
+        setPendingFile(null);
+        setMissingEntities(null);
     };
 
     const downloadErrorReport = () => {
@@ -285,6 +356,64 @@ export default function BulkImportPage() {
                     </li>
                 </ul>
             </div>
+
+            {/* Confirmation Dialog for Missing Entities */}
+            {showConfirmDialog && missingEntities && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Missing Entities Detected</h2>
+                        <p className="text-gray-700 mb-4">
+                            The following departments and/or categories don't exist in the system:
+                        </p>
+
+                        {missingEntities.departments.length > 0 && (
+                            <div className="mb-4">
+                                <h3 className="font-semibold text-gray-900 mb-2">Departments:</h3>
+                                <ul className="list-disc list-inside bg-red-50 p-3 rounded border border-red-200">
+                                    {missingEntities.departments.map((dept, idx) => (
+                                        <li key={idx} className="text-red-700">{dept}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {missingEntities.categories.length > 0 && (
+                            <div className="mb-4">
+                                <h3 className="font-semibold text-gray-900 mb-2">Categories:</h3>
+                                <ul className="list-disc list-inside bg-red-50 p-3 rounded border border-red-200">
+                                    {missingEntities.categories.map((cat, idx) => (
+                                        <li key={idx} className="text-red-700">{cat}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+                            <p className="text-sm text-blue-800">
+                                <strong>Would you like to create these entities automatically?</strong>
+                            </p>
+                            <p className="text-xs text-blue-600 mt-1">
+                                They will be created with default descriptions and can be edited later.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleConfirmAutoCreate}
+                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                            >
+                                Create & Import
+                            </button>
+                            <button
+                                onClick={handleCancelAutoCreate}
+                                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 font-medium"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Tabs */}
             <div className="flex gap-4 mb-6 border-b">

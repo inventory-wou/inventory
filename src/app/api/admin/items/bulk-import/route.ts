@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
         const file = formData.get('file') as File;
         const dryRun = formData.get('dryRun') === 'true';
         const skipInvalid = formData.get('skipInvalid') !== 'false'; // Default true
+        const autoCreateMissing = formData.get('autoCreateMissing') === 'true'; // Default false
 
         if (!file) {
             return NextResponse.json(
@@ -117,19 +118,37 @@ export async function POST(request: NextRequest) {
 
         // If dry run, only validate without importing
         if (dryRun) {
-            const result = await bulkCreateItems(rows, session.user.id, true);
+            const result = await bulkCreateItems(rows, session.user.id, true, false); // Don't auto-create in dry run
             return NextResponse.json({
                 dryRun: true,
                 totalRows: rows.length,
                 validRows: result.imported,
                 invalidRows: result.failed,
                 errors: result.errors,
+                missingDepartments: result.missingDepartments || [],
+                missingCategories: result.missingCategories || [],
                 extractedImages,
             });
         }
 
         // Perform actual import
-        const result = await bulkCreateItems(rows, session.user.id, skipInvalid);
+        const result = await bulkCreateItems(rows, session.user.id, skipInvalid, autoCreateMissing);
+
+        // Build success message
+        let message = result.success
+            ? `Successfully imported ${result.imported} items`
+            : `Imported ${result.imported} items, ${result.failed} failed`;
+
+        if (result.createdDepartments || result.createdCategories) {
+            const createdParts = [];
+            if (result.createdDepartments) createdParts.push(`${result.createdDepartments} department(s)`);
+            if (result.createdCategories) createdParts.push(`${result.createdCategories} category(ies)`);
+            message += ` (Auto-created: ${createdParts.join(', ')})`;
+        }
+
+        if (extractedImages > 0) {
+            message += ` (${extractedImages} images extracted)`;
+        }
 
         return NextResponse.json({
             success: result.success,
@@ -138,9 +157,9 @@ export async function POST(request: NextRequest) {
             totalRows: rows.length,
             errors: result.errors,
             extractedImages,
-            message: result.success
-                ? `Successfully imported ${result.imported} items${extractedImages > 0 ? ` (${extractedImages} images auto-extracted)` : ''}`
-                : `Imported ${result.imported} items, ${result.failed} failed${extractedImages > 0 ? ` (${extractedImages} images extracted)` : ''}`,
+            createdDepartments: result.createdDepartments,
+            createdCategories: result.createdCategories,
+            message,
         });
     } catch (error) {
         console.error('Bulk import error:', error);

@@ -30,6 +30,10 @@ export interface BulkImportResult {
     imported: number;
     failed: number;
     errors: ValidationError[];
+    missingDepartments?: string[];
+    missingCategories?: string[];
+    createdDepartments?: number;
+    createdCategories?: number;
 }
 
 /**
@@ -212,37 +216,85 @@ export async function validateItemRow(
 }
 
 /**
+ * Create missing departments and categories
+ */
+export async function createMissingEntities(
+    missingDepartments: string[],
+    missingCategories: string[],
+    userId: string
+): Promise<{ createdDepartments: number; createdCategories: number }> {
+    let createdDepartments = 0;
+    let createdCategories = 0;
+
+    // Create missing departments
+    for (const deptName of missingDepartments) {
+        try {
+            // Generate a simple code from name (first 4 chars uppercase)
+            const code = deptName.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '') +
+                Math.random().toString(36).substring(2, 4).toUpperCase();
+
+            await prisma.department.create({
+                data: {
+                    name: deptName,
+                    code: code,
+                    description: `Auto-created during bulk import`,
+                },
+            });
+            createdDepartments++;
+        } catch (error) {
+            console.error(`Failed to create department ${deptName}:`, error);
+        }
+    }
+
+    // Create missing categories
+    for (const catName of missingCategories) {
+        try {
+            await prisma.category.create({
+                data: {
+                    name: catName,
+                    description: `Auto-created during bulk import`,
+                },
+            });
+            createdCategories++;
+        } catch (error) {
+            console.error(`Failed to create category ${catName}:`, error);
+        }
+    }
+
+    return { createdDepartments, createdCategories };
+}
+
+/**
  * Bulk create items from validated data
  */
 export async function bulkCreateItems(
     rows: ImportRow[],
     userId: string,
-    skipInvalid: boolean = true
+    skipInvalid: boolean = true,
+    autoCreateMissing: boolean = false
 ): Promise<BulkImportResult> {
     const errors: ValidationError[] = [];
     let imported = 0;
     let failed = 0;
     const existingSerialNumbers = new Set<string>();
+    const missingDepartmentsSet = new Set<string>();
+    const missingCategoriesSet = new Set<string>();
 
+    // First pass: validate and collect missing entities
     for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const rowIndex = i + 2; // +2 because row 1 is header, and array is 0-indexed
 
         try {
-            // Validate row
+            // Basic validation
             const rowErrors = await validateItemRow(row, rowIndex, existingSerialNumbers);
 
             if (rowErrors.length > 0) {
                 errors.push(...rowErrors);
-                failed++;
-                if (!skipInvalid) {
-                    // If not skipping invalid, stop here
-                    throw new Error('Validation failed');
-                }
                 continue;
             }
 
-            // Find department
+            // Check if department exists
             const department = await prisma.department.findFirst({
                 where: {
                     OR: [
@@ -252,7 +304,102 @@ export async function bulkCreateItems(
                 },
             });
 
-            // Find category
+            if (!department) {
+                missingDepartmentsSet.add(row.department);
+            }
+
+            // Check if category exists
+            const category = await prisma.category.findFirst({
+                where: { name: row.category },
+            });
+
+            if (!category) {
+                missingCategoriesSet.add(row.category);
+            }
+        } catch (error) {
+            console.error(`Error validating row ${rowIndex}:`, error);
+        }
+    }
+
+    const missingDepartments = Array.from(missingDepartmentsSet);
+    const missingCategories = Array.from(missingCategoriesSet);
+
+    // If there are missing entities and auto-create is enabled, create them
+    let createdDepartments = 0;
+    let createdCategories = 0;
+
+    if (autoCreateMissing && (missingDepartments.length > 0 || missingCategories.length > 0)) {
+        const created = await createMissingEntities(missingDepartments, missingCategories, userId);
+        createdDepartments = created.createdDepartments;
+        createdCategories = created.createdCategories;
+    }
+
+    // If not auto-creating and there are missing entities, add errors and return
+    if (!autoCreateMissing && (missingDepartments.length > 0 || missingCategories.length > 0)) {
+        // Add errors for missing entities
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const rowIndex = i + 2;
+
+            if (missingDepartments.includes(row.department)) {
+                errors.push({
+                    row: rowIndex,
+                    field: 'department',
+                    message: `Department "${row.department}" not found`,
+                });
+                failed++;
+            }
+
+            if (missingCategories.includes(row.category)) {
+                errors.push({
+                    row: rowIndex,
+                    field: 'category',
+                    message: `Category "${row.category}" not found`,
+                });
+                failed++;
+            }
+        }
+
+        return {
+            success: false,
+            imported: 0,
+            failed,
+            errors,
+            missingDepartments,
+            missingCategories,
+        };
+    }
+
+    // Second pass: import items
+    const finalExistingSerialNumbers = new Set<string>();
+
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowIndex = i + 2;
+
+        try {
+            // Re-validate row
+            const rowErrors = await validateItemRow(row, rowIndex, finalExistingSerialNumbers);
+
+            if (rowErrors.length > 0) {
+                failed++;
+                if (!skipInvalid) {
+                    throw new Error('Validation failed');
+                }
+                continue;
+            }
+
+            // Find department (should exist now)
+            const department = await prisma.department.findFirst({
+                where: {
+                    OR: [
+                        { name: row.department },
+                        { code: row.department },
+                    ],
+                },
+            });
+
+            // Find category (should exist now)
             const category = await prisma.category.findFirst({
                 where: { name: row.category },
             });
@@ -318,6 +465,10 @@ export async function bulkCreateItems(
         imported,
         failed,
         errors,
+        missingDepartments: missingDepartments.length > 0 ? missingDepartments : undefined,
+        missingCategories: missingCategories.length > 0 ? missingCategories : undefined,
+        createdDepartments: createdDepartments > 0 ? createdDepartments : undefined,
+        createdCategories: createdCategories > 0 ? createdCategories : undefined,
     };
 }
 
